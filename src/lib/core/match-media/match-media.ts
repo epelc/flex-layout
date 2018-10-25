@@ -81,6 +81,20 @@ export class MatchMedia {
         };
 
         if (!mql) {
+          if (query === 'print') {
+            // If we are listening for a print media query we need to add a `beforeprint` event listener to trigger the `mql` synchronously.
+            // Regular matchMedia events are not synchronous and do not have time to update the layout before the print dialog shows and takes a snapshot.
+            // Workaround for #869
+            // This requires explicit use of `fxLayout.print` to racing between size based layouts. We don't know the size of prints
+            // before hand so you must use a single layout for printing.
+            window.addEventListener('beforeprint', () => {
+              onMQLEvent({
+                mediaQuery: query,
+                matches: true,
+              } as any)
+            })
+          }
+          
           mql = this._buildMQL(query);
           mql.addListener(onMQLEvent);
           this._registry.set(query, mql);
