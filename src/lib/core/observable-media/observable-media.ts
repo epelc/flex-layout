@@ -6,7 +6,7 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import {Injectable} from '@angular/core';
-import {Observable, Subscribable, Subscription} from 'rxjs';
+import {Observable, PartialObserver, Subscribable, Subscription} from 'rxjs';
 import {filter, map} from 'rxjs/operators';
 
 import {BreakPointRegistry} from '../breakpoints/break-point-registry';
@@ -17,6 +17,8 @@ import {BreakPoint} from '../breakpoints/break-point';
 
 /**
  * Base class for MediaService and pseudo-token for
+ * @deprecated use MediaObserver instead
+ * @deletion-target v7.0.0-beta.21
  */
 export abstract class ObservableMedia implements Subscribable<MediaChange> {
   abstract isActive(query: string): boolean;
@@ -26,6 +28,7 @@ export abstract class ObservableMedia implements Subscribable<MediaChange> {
   abstract subscribe(next?: (value: MediaChange) => void,
                      error?: (error: any) => void,
                      complete?: () => void): Subscription;
+  abstract subscribe(observer?: PartialObserver<MediaChange>): Subscription;
 }
 
 /**
@@ -70,6 +73,8 @@ export abstract class ObservableMedia implements Subscribable<MediaChange> {
  *        ).subscribe(onChange);
  *    }
  *  }
+ *  @deprecated use MediaObserver instead
+ *  @deletion-target v7.0.0-beta.21
  */
 @Injectable({providedIn: 'root'})
 export class MediaService implements ObservableMedia {
@@ -87,18 +92,24 @@ export class MediaService implements ObservableMedia {
   /**
    * Test if specified query/alias is active.
    */
-  isActive(alias): boolean {
-    let query = this._toMediaQuery(alias);
-    return this.mediaWatcher.isActive(query);
+  isActive(alias: string): boolean {
+    return this.mediaWatcher.isActive(this._toMediaQuery(alias));
   }
 
   /**
    * Proxy to the Observable subscribe method
    */
-  subscribe(next?: (value: MediaChange) => void,
+  subscribe(observerOrNext?: PartialObserver<MediaChange> | ((value: MediaChange) => void),
             error?: (error: any) => void,
             complete?: () => void): Subscription {
-    return this.observable$.subscribe(next, error, complete);
+    if (observerOrNext) {
+      if (typeof observerOrNext === 'object') {
+        return this.observable$.subscribe(observerOrNext.next, observerOrNext.error,
+          observerOrNext.complete);
+      }
+    }
+
+    return this.observable$.subscribe(observerOrNext, error, complete);
   }
 
   /**
@@ -119,7 +130,7 @@ export class MediaService implements ObservableMedia {
    * mediaQuery activations
    */
   private _registerBreakPoints() {
-    let queries = this.breakpoints.sortedItems.map(bp => bp.mediaQuery);
+    const queries = this.breakpoints.sortedItems.map(bp => bp.mediaQuery);
     this.mediaWatcher.registerQuery(queries);
   }
 
@@ -131,17 +142,9 @@ export class MediaService implements ObservableMedia {
    *       must be injected into the MediaChange
    */
   private _buildObservable() {
-    const self = this;
-    const media$ = this.mediaWatcher.observe();
-    const activationsOnly = (change: MediaChange) => {
-      return change.matches === true;
-    };
-    const addAliasInformation = (change: MediaChange) => {
-      return mergeAlias(change, this._findByQuery(change.mediaQuery));
-    };
     const excludeOverlaps = (change: MediaChange) => {
-      let bp = this.breakpoints.findByQuery(change.mediaQuery);
-      return !bp ? true : !(self.filterOverlaps && bp.overlapping);
+      const bp = this.breakpoints.findByQuery(change.mediaQuery);
+      return !bp ? true : !(this.filterOverlaps && bp.overlapping);
     };
 
     /**
@@ -149,38 +152,43 @@ export class MediaService implements ObservableMedia {
      * Inject associated (if any) alias information into the MediaChange event
      * Exclude mediaQuery activations for overlapping mQs. List bounded mQ ranges only
      */
-    return media$.pipe(
-      filter(activationsOnly),
+    return this.mediaWatcher.observe().pipe(
+      filter(change => change.matches),
       filter(excludeOverlaps),
-      map(addAliasInformation)
+      map((change: MediaChange) =>
+        mergeAlias(change, this._findByQuery(change.mediaQuery)))
     );
   }
 
   /**
    * Breakpoint locator by alias
    */
-  private _findByAlias(alias) {
+  private _findByAlias(alias: string) {
     return this.breakpoints.findByAlias(alias);
   }
 
   /**
    * Breakpoint locator by mediaQuery
    */
-  private _findByQuery(query) {
+  private _findByQuery(query: string) {
     return this.breakpoints.findByQuery(query);
   }
 
   /**
    * Find associated breakpoint (if any)
    */
-  private _toMediaQuery(query) {
-    let bp: BreakPoint | null = this._findByAlias(query) || this._findByQuery(query);
+  private _toMediaQuery(query: string) {
+    const bp: BreakPoint | null = this._findByAlias(query) || this._findByQuery(query);
     return bp ? bp.mediaQuery : query;
   }
 
-  private observable$: Observable<MediaChange>;
+  private readonly observable$: Observable<MediaChange>;
 }
 
+/**
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
+ */
 export const ObservableMediaProvider = { // tslint:disable-line:variable-name
   provide: ObservableMedia,
   useClass: MediaService

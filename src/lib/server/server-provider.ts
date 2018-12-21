@@ -15,7 +15,8 @@ import {
   BreakPoint,
   MatchMedia,
   StylesheetMap,
-  ServerMatchMedia
+  ServerMatchMedia,
+  prioritySort,
 } from '@angular/flex-layout/core';
 
 
@@ -24,7 +25,7 @@ import {
  * retrieve the associated stylings from the virtual stylesheet
  * @param serverSheet the virtual stylesheet that stores styles for each
  *        element
- * @param matchMedia the service to activate/deactive breakpoints
+ * @param matchMedia the service to activate/deactivate breakpoints
  * @param breakpoints the registered breakpoints to activate/deactivate
  */
 export function generateStaticFlexLayoutStyles(serverSheet: StylesheetMap,
@@ -41,6 +42,7 @@ export function generateStaticFlexLayoutStyles(serverSheet: StylesheetMap,
   const defaultStyles = new Map(serverSheet.stylesheet);
   let styleText = generateCss(defaultStyles, 'all', classMap);
 
+  breakpoints.sort(prioritySort);
   breakpoints.reverse();
   breakpoints.forEach((bp, i) => {
     serverSheet.clearStyles();
@@ -70,7 +72,7 @@ export function FLEX_SSR_SERIALIZER_FACTORY(serverSheet: StylesheetMap,
     const styleText = generateStaticFlexLayoutStyles(serverSheet, matchMedia, breakpoints);
     styleTag.classList.add(`${CLASS_NAME}ssr`);
     styleTag.textContent = styleText;
-    _document.head.appendChild(styleTag);
+    _document.head!.appendChild(styleTag);
   };
 }
 
@@ -153,13 +155,13 @@ function formatSegment(css: string, asPrefix: boolean = true): string {
  * If not found, generate global className and set
  * association.
  */
-function  getClassName(stylesheet, classMap) {
-  let className = classMap.get(stylesheet);
-   if (!className) {
-     className = `${CLASS_NAME}${nextId++}`;
-     classMap.set(stylesheet, className);
-   }
-   stylesheet.classList.add(className);
+function getClassName(element: HTMLElement, classMap: Map<HTMLElement, string>) {
+  let className = classMap.get(element);
+  if (!className) {
+    className = `${CLASS_NAME}${nextId++}`;
+    classMap.set(element, className);
+  }
+  element.classList.add(className);
 
-   return className;
+  return className;
 }

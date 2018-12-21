@@ -1,3 +1,110 @@
+<a name="7.0.0-beta.22"></a>
+# [7.0.0-beta.22](https://github.com/angular/flex-layout/compare/7.0.0-beta.21...7.0.0-beta.22) (2018-12-19)
+
+
+### Bug Fixes
+
+* **core:** allow for breakpoints with periods in them ([#921](https://github.com/angular/flex-layout/issues/921)) ([84e811b](https://github.com/angular/flex-layout/commit/84e811b)), closes [#776](https://github.com/angular/flex-layout/issues/776)
+* **core:** avoid duplicate mediaQuery activations ([#937](https://github.com/angular/flex-layout/issues/937)) ([23592ee](https://github.com/angular/flex-layout/commit/23592ee))
+* **core:** avoid race condition between registration and activation ([#923](https://github.com/angular/flex-layout/issues/923)) ([232fc6e](https://github.com/angular/flex-layout/commit/232fc6e))
+* **core:** clear recent styles after responsive deactivation ([#927](https://github.com/angular/flex-layout/issues/927)) ([d322ea7](https://github.com/angular/flex-layout/commit/d322ea7)), closes [#697](https://github.com/angular/flex-layout/issues/697) [#296](https://github.com/angular/flex-layout/issues/296)
+* **flex-offset:** correct type when using with 'strictNullChecks' ([#929](https://github.com/angular/flex-layout/issues/929)) ([21b6d29](https://github.com/angular/flex-layout/commit/21b6d29))
+* **fxLayoutGap:** account for responsive fxHide on children elements ([#931](https://github.com/angular/flex-layout/issues/931)) ([7759b6c](https://github.com/angular/flex-layout/commit/7759b6c)), closes [#606](https://github.com/angular/flex-layout/issues/606)
+* **fxLayoutGap:** respond correctly to layout changes ([#919](https://github.com/angular/flex-layout/issues/919)) ([676ddf7](https://github.com/angular/flex-layout/commit/676ddf7))
+* **ngStyle:** do not truncate URLs ([#938](https://github.com/angular/flex-layout/issues/938)) ([1548727](https://github.com/angular/flex-layout/commit/1548727)), closes [#935](https://github.com/angular/flex-layout/issues/935)
+* **ngStyle:** should work with preexisting styles ([#939](https://github.com/angular/flex-layout/issues/939)) ([4be5cef](https://github.com/angular/flex-layout/commit/4be5cef))
+
+
+### Features
+
+* **core:** add static scss mixin ([#940](https://github.com/angular/flex-layout/issues/940)) ([ffd8331](https://github.com/angular/flex-layout/commit/ffd8331)), closes [#783](https://github.com/angular/flex-layout/issues/783)
+
+Used for extra styling more easily at build time (instead of runtime with the HTML API), this feature (sass mixin) 
+allows developers to generate and include Layout mediaQuery css to their own stylesheets.
+
+NOTE: This feature is marked as experimental and is subject to change unless posted otherwise. To use, import
+the new SASS file as follows:
+
+```sass
+@import '~@angular/flex-layout/mq';
+
+// This translates to (min-width: 0) and (max-width: 599px) {}
+@include layout-bp(xs) {
+  background-color: red;
+}
+```
+
+Feedback on this feature is very much welcome, and we are open to adding additional functionality based on user interest.
+
+<a name="7.0.0-beta.21"></a>
+# [7.0.0-beta.21](https://github.com/angular/flex-layout/compare/7.0.0-beta.20...7.0.0-beta.21) (2018-12-15)
+
+
+### Bug Fixes
+
+* **core:** register all breakpoints at startup ([#916](https://github.com/angular/flex-layout/issues/916)) ([8f1a085](https://github.com/angular/flex-layout/commit/8f1a085)), closes [#915](https://github.com/angular/flex-layout/issues/915)
+
+
+
+<a name="7.0.0-beta.20"></a>
+# [7.0.0-beta.20](https://github.com/angular/flex-layout/compare/7.0.0-beta.19...7.0.0-beta.20) (2018-12-14)
+
+Beta 20 brings about numerous, high-visibility improvements to the library with very minimal API changes. These include:
+
+* StyleBuilders: style memoization and support for easy customization of injected styles
+* MediaMarshaller: centralizes handling of mediaQuery events to trigger layout style injections
+
+#### StyleBuilders
+
+With the introduction of `StyleBuilder`s, users now have the flexibility to augment or replace our style generation algorithms.  They also allow us to memoize style generation to improve performance. With the introduction of `MediaMarshaller`, we are able to _dramatically_ reduce the size and complexity of the library and improve the usability of custom breakpoints.
+
+### Bug Fixes
+
+* **fxLayoutAlign:** add space-between and space-around options ([#845](https://github.com/angular/flex-layout/issues/845)) ([5e3ec0e](https://github.com/angular/flex-layout/commit/5e3ec0e)), closes [#841](https://github.com/angular/flex-layout/issues/841)
+* **fxLayoutAlign:** do not apply cross-axis stretch styles when not needed ([#877](https://github.com/angular/flex-layout/issues/877)) ([3cd5bc1](https://github.com/angular/flex-layout/commit/3cd5bc1)), closes [#876](https://github.com/angular/flex-layout/issues/876)
+* **show-hide:** account for multiple directives on the same element ([ad3e9c9](https://github.com/angular/flex-layout/commit/ad3e9c9))
+* **show-hide:** work with Angular components and elements without fxLayout ([#881](https://github.com/angular/flex-layout/issues/881)) ([3a0ec5d](https://github.com/angular/flex-layout/commit/3a0ec5d)), closes [#848](https://github.com/angular/flex-layout/issues/848) [#724](https://github.com/angular/flex-layout/issues/724)
+
+
+### Features
+
+* **core:** add ability to override style building ([#884](https://github.com/angular/flex-layout/issues/884)) ([9148e87](https://github.com/angular/flex-layout/commit/9148e87)), closes [#689](https://github.com/angular/flex-layout/issues/689)
+* **core:** add centralized media marshal service ([#900](https://github.com/angular/flex-layout/issues/900)) ([cd05cb4](https://github.com/angular/flex-layout/commit/cd05cb4)), closes [#903](https://github.com/angular/flex-layout/issues/903) [#692](https://github.com/angular/flex-layout/issues/692)
+* **core:** add memoization to style generation ([#888](https://github.com/angular/flex-layout/issues/888)) ([4600672](https://github.com/angular/flex-layout/commit/4600672))
+* **flex:** add support for rem units ([#901](https://github.com/angular/flex-layout/issues/901)) ([5990ed0](https://github.com/angular/flex-layout/commit/5990ed0)), closes [#898](https://github.com/angular/flex-layout/issues/898)
+* **media-observer:** migrate ObservableMedia ([#892](https://github.com/angular/flex-layout/issues/892)) ([1205588](https://github.com/angular/flex-layout/commit/1205588)), closes [#885](https://github.com/angular/flex-layout/issues/885)
+
+
+### BREAKING CHANGES
+
+* **media-observer:** `ObservableMedia` is now deprecated in anticipation of RxJS v7.
+The new API is called **`MediaObserver`**, and provides the exact same functionality as ObservableMedia, except you cannot directly subscribe to it,
+
+Developers should subscribe to MediaObserver's `media$` property; in place of subscribing directly to ObservableMedia.
+
+
+
+<a name="7.0.0-beta.19"></a>
+# [7.0.0-beta.19](https://github.com/angular/flex-layout/compare/6.0.0-beta.18...7.0.0-beta.19) (2018-10-05)
+
+
+### Bug Fixes
+
+* **build:** upgrade to Angular and Material v7 and add strict flags  ([5ddccb5](https://github.com/angular/flex-layout/commit/5ddccb5)), closes [#851](https://github.com/angular/flex-layout/issues/851) [#855](https://github.com/angular/flex-layout/issues/855)
+* **module:** do not require breakpoints in withConfig ([#853](https://github.com/angular/flex-layout/issues/853)) ([76c110e](https://github.com/angular/flex-layout/commit/76c110e)), closes [#846](https://github.com/angular/flex-layout/issues/846)
+
+
+
+<a name="6.0.0-beta.18"></a>
+# [6.0.0-beta.18](https://github.com/angular/flex-layout/compare/6.0.0-beta.17...6.0.0-beta.18) (2018-08-31)
+
+
+### Bug Fixes
+
+* **build:** update to TypeScript 2.9 and RxJS 6.3  ([aa8fb8c](https://github.com/angular/flex-layout/commit/aa8fb8c)), closes [#828](https://github.com/angular/flex-layout/issues/828) [#827](https://github.com/angular/flex-layout/issues/827)
+
+
+
 <a name="6.0.0-beta.17"></a>
 # [6.0.0-beta.17](https://github.com/angular/flex-layout/compare/6.0.0-beta.16...6.0.0-beta.17) (2018-07-27)
 

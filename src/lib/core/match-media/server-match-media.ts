@@ -7,11 +7,9 @@
  */
 import {DOCUMENT} from '@angular/common';
 import {Inject, Injectable, NgZone, PLATFORM_ID} from '@angular/core';
-import {BehaviorSubject, Observable} from 'rxjs';
 
 import {BreakPoint} from '../breakpoints/break-point';
 import {MatchMedia} from './match-media';
-import {MediaChange} from '../media-change';
 
 /**
  * Special server-only class to simulate a MediaQueryList and
@@ -46,7 +44,8 @@ export class ServerMediaQueryList implements MediaQueryList {
     if (!this._isActive) {
       this._isActive = true;
       this._listeners.forEach((callback) => {
-        callback(this);
+        const cb: ((this: MediaQueryList, ev: MediaQueryListEvent) => any) = callback!;
+        cb.call(null, this);
       });
     }
     return this;
@@ -57,7 +56,8 @@ export class ServerMediaQueryList implements MediaQueryList {
     if (this._isActive) {
       this._isActive = false;
       this._listeners.forEach((callback) => {
-        callback(this);
+        const cb: ((this: MediaQueryList, ev: MediaQueryListEvent) => any) = callback!;
+        cb.call(null, this);
       });
     }
     return this;
@@ -69,13 +69,40 @@ export class ServerMediaQueryList implements MediaQueryList {
       this._listeners.push(listener);
     }
     if (this._isActive) {
-      listener(this);
+      const cb: ((this: MediaQueryList, ev: MediaQueryListEvent) => any) = listener!;
+      cb.call(null, this);
     }
   }
 
   /** Don't need to remove listeners in the server environment */
-  removeListener(_: MediaQueryListListener) {
+  removeListener(_: EventListenerOrEventListenerObject | null) {
   }
+
+  addEventListener<K extends keyof
+    MediaQueryListEventMap>(_: K,
+                            __: (this: MediaQueryList,
+                                 ev: MediaQueryListEventMap[K]) => any,
+                            ___?: boolean | AddEventListenerOptions): void;
+  addEventListener(_: string,
+                   __: EventListenerOrEventListenerObject,
+                   ___?: boolean | AddEventListenerOptions) {
+  }
+
+  removeEventListener<K extends keyof
+    MediaQueryListEventMap>(_: K,
+                            __: (this: MediaQueryList,
+                                 ev: MediaQueryListEventMap[K]) => any,
+                            ___?: boolean | EventListenerOptions): void;
+  removeEventListener(_: string,
+                      __: EventListenerOrEventListenerObject,
+                      ___?: boolean | EventListenerOptions) {
+  }
+
+  dispatchEvent(_: Event): boolean {
+    return false;
+  }
+
+  onchange: MediaQueryListListener = null;
 }
 
 /**
@@ -86,17 +113,12 @@ export class ServerMediaQueryList implements MediaQueryList {
  */
 @Injectable()
 export class ServerMatchMedia extends MatchMedia {
-  protected _registry: Map<string, ServerMediaQueryList>;
-  protected _source: BehaviorSubject<MediaChange>;
-  protected _observable$: Observable<MediaChange>;
+  protected _registry: Map<string, ServerMediaQueryList> = new Map();
 
   constructor(protected _zone: NgZone,
               @Inject(PLATFORM_ID) protected _platformId: Object,
               @Inject(DOCUMENT) protected _document: any) {
     super(_zone, _platformId, _document);
-    this._registry = new Map<string, ServerMediaQueryList>();
-    this._source = new BehaviorSubject<MediaChange>(new MediaChange(true));
-    this._observable$ = this._source.asObservable();
   }
 
   /** Activate the specified breakpoint if we're on the server, no-op otherwise */
@@ -123,3 +145,5 @@ export class ServerMatchMedia extends MatchMedia {
     return new ServerMediaQueryList(query);
   }
 }
+
+type MediaQueryListListener = ((this: MediaQueryList, ev: MediaQueryListEvent) => any) | null;

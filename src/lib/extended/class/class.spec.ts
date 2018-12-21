@@ -18,7 +18,7 @@ import {
 
 import {customMatchers, expect} from '../../utils/testing/custom-matchers';
 import {makeCreateTestComponent, expectNativeEl, queryFor} from '../../utils/testing/helpers';
-import {ClassDirective} from './class';
+import {DefaultClassDirective} from './class';
 
 
 describe('class directive', () => {
@@ -44,7 +44,7 @@ describe('class directive', () => {
         CommonModule,
         CoreModule
       ],
-      declarations: [TestClassComponent, ClassDirective],
+      declarations: [TestClassComponent, DefaultClassDirective],
       providers: [MockMatchMediaProvider]
     });
   });
@@ -251,9 +251,9 @@ describe('class directive', () => {
   template: `<span>PlaceHolder Template HTML</span>`
 })
 class TestClassComponent {
-  hasXs1: boolean;
-  hasXs2: boolean;
-  hasXs3: boolean;
+  hasXs1: boolean = false;
+  hasXs2: boolean = false;
+  hasXs3: boolean = false;
   formButtonXs = true;
 }
 
@@ -597,7 +597,7 @@ describe('binding to CSS class list', () => {
 @Component({selector: 'test-cmp', template: ''})
 class TestComponent {
   condition = true;
-  items: any[];
+  items: any[] = [];
   arrExpr: string[] = ['foo'];
   setExpr: Set<string> = new Set<string>();
   objExpr: {[klass: string]: any} = {'foo': true, 'bar': false};

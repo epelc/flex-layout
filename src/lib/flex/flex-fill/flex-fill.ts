@@ -5,9 +5,14 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {Directive, ElementRef} from '@angular/core';
-import {BaseDirective, MediaMonitor, StyleUtils} from '@angular/flex-layout/core';
-
+import {Directive, ElementRef, Injectable} from '@angular/core';
+import {
+  BaseDirective2,
+  StyleBuilder,
+  StyleDefinition,
+  StyleUtils,
+  MediaMarshaller,
+} from '@angular/flex-layout/core';
 
 const FLEX_FILL_CSS = {
   'margin': 0,
@@ -17,21 +22,30 @@ const FLEX_FILL_CSS = {
   'min-height': '100%'
 };
 
+@Injectable({providedIn: 'root'})
+export class FlexFillStyleBuilder extends StyleBuilder {
+  buildStyles(_input: string) {
+    return FLEX_FILL_CSS;
+  }
+}
+
 /**
  * 'fxFill' flexbox styling directive
  *  Maximizes width and height of element in a layout container
  *
  *  NOTE: fxFill is NOT responsive API!!
  */
-@Directive({selector: `
-  [fxFill],
-  [fxFlexFill]
-`})
-export class FlexFillDirective extends BaseDirective {
-  constructor(monitor: MediaMonitor,
-              public elRef: ElementRef,
-              styleUtils: StyleUtils) {
-    super(monitor, elRef, styleUtils);
-    this._applyStyleToElement(FLEX_FILL_CSS);
+@Directive({selector: `[fxFill], [fxFlexFill]`})
+export class FlexFillDirective extends BaseDirective2 {
+  constructor(protected elRef: ElementRef,
+              protected styleUtils: StyleUtils,
+              protected styleBuilder: FlexFillStyleBuilder,
+              protected marshal: MediaMarshaller) {
+    super(elRef, styleBuilder, styleUtils, marshal);
+    this.addStyles('');
   }
+
+  protected styleCache = flexFillCache;
 }
+
+const flexFillCache: Map<string, StyleDefinition> = new Map();

@@ -18,14 +18,16 @@ export class StyleUtils {
 
   constructor(@Optional() private _serverStylesheet: StylesheetMap,
               @Optional() @Inject(SERVER_TOKEN) private _serverModuleLoaded: boolean,
-              @Inject(PLATFORM_ID) private _platformId,
+              @Inject(PLATFORM_ID) private _platformId: Object,
               @Inject(LAYOUT_CONFIG) private layoutConfig: LayoutConfigOptions) {}
 
   /**
    * Applies styles given via string pair or object map to the directive element
    */
-  applyStyleToElement(element: HTMLElement, style: StyleDefinition, value?: string | number) {
-    let styles = {};
+  applyStyleToElement(element: HTMLElement,
+                      style: StyleDefinition | string,
+                      value: string | number | null = null) {
+    let styles: StyleDefinition = {};
     if (typeof style === 'string') {
       styles[style] = value;
       style = styles;
@@ -52,9 +54,6 @@ export class StyleUtils {
   getFlowDirection(target: HTMLElement): [string, string] {
     const query = 'flex-direction';
     let value = this.lookupStyle(target, query);
-    if (value === FALLBACK_STYLE) {
-      value = '';
-    }
     const hasInlineValue = this.lookupInlineStyle(target, query) ||
     (isPlatformServer(this._platformId) && this._serverModuleLoaded) ? value : '';
 
@@ -73,7 +72,7 @@ export class StyleUtils {
    */
   lookupInlineStyle(element: HTMLElement, styleName: string): string {
     return isPlatformBrowser(this._platformId) ?
-      element.style[styleName] : this._getServerStyle(element, styleName);
+      element.style.getPropertyValue(styleName) : this._getServerStyle(element, styleName);
   }
 
   /**
@@ -99,7 +98,7 @@ export class StyleUtils {
 
     // Note: 'inline' is the default of all elements, unless UA stylesheet overrides;
     //       in which case getComputedStyle() should determine a valid value.
-    return value ? value.trim() : FALLBACK_STYLE;
+    return value.trim();
   }
 
   /**
@@ -107,11 +106,14 @@ export class StyleUtils {
    * Each value will be added as element style
    * Keys are sorted to add prefixed styles (like -webkit-x) first, before the standard ones
    */
-  private _applyMultiValueStyleToElement(styles: {}, element: HTMLElement) {
+  private _applyMultiValueStyleToElement(styles: StyleDefinition,
+                                         element: HTMLElement) {
     Object.keys(styles).sort().forEach(key => {
-      const values = Array.isArray(styles[key]) ? styles[key] : [styles[key]];
+      const el = styles[key];
+      const values: (string | number | null)[] = Array.isArray(el) ? el : [el];
       values.sort();
       for (let value of values) {
+        value = value ? value + '' : '';
         if (isPlatformBrowser(this._platformId) || !this._serverModuleLoaded) {
           isPlatformBrowser(this._platformId) ?
             element.style.setProperty(key, value) : this._setServerStyle(element, key, value);
@@ -171,5 +173,3 @@ export class StyleUtils {
  * map of property name and value (e.g. {display: 'none', flex-order: 5})
  */
 export type StyleDefinition = { [property: string]: string | number | null };
-
-const FALLBACK_STYLE = 'block';

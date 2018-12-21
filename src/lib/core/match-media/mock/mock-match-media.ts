@@ -28,17 +28,18 @@ export class MockMatchMedia extends MatchMedia {
    */
   useOverlaps = false;
 
+  protected _registry: Map<string, MockMediaQueryList> = new Map();
+
   constructor(_zone: NgZone,
               @Inject(PLATFORM_ID) _platformId: Object,
               @Inject(DOCUMENT) _document: any,
               private _breakpoints: BreakPointRegistry) {
     super(_zone, _platformId, _document);
-    this._actives = [];
   }
 
   /** Easy method to clear all listeners for all mediaQueries */
   clearAll() {
-    this._registry.forEach((mql: MockMediaQueryList, _) => {
+    this._registry.forEach((mql: MockMediaQueryList) => {
       mql.destroy();
     });
     this._registry.clear();
@@ -61,12 +62,9 @@ export class MockMatchMedia extends MatchMedia {
   }
 
   /** Converts an optional mediaQuery alias to a specific, valid mediaQuery */
-  _validateQuery(queryOrAlias) {
-    let bp = this._breakpoints.findByAlias(queryOrAlias);
-    if (bp) {
-      queryOrAlias = bp.mediaQuery;
-    }
-    return queryOrAlias;
+  _validateQuery(queryOrAlias: string) {
+    const bp = this._breakpoints.findByAlias(queryOrAlias);
+    return (bp && bp.mediaQuery) || queryOrAlias;
   }
 
   /**
@@ -75,8 +73,8 @@ export class MockMatchMedia extends MatchMedia {
    */
   private _activateWithOverlaps(mediaQuery: string, useOverlaps: boolean): boolean {
     if (useOverlaps) {
-      let bp = this._breakpoints.findByQuery(mediaQuery);
-      let alias = bp ? bp.alias : 'unknown';
+      const bp = this._breakpoints.findByQuery(mediaQuery);
+      const alias = bp ? bp.alias : 'unknown';
 
       // Simulate activation of overlapping lt-<XXX> ranges
       switch (alias) {
@@ -117,9 +115,9 @@ export class MockMatchMedia extends MatchMedia {
   /**
    *
    */
-  private _activateByAlias(aliases) {
-    let activate = (alias) => {
-      let bp = this._breakpoints.findByAlias(alias);
+  private _activateByAlias(aliases: string) {
+    const activate = (alias: string) => {
+      const bp = this._breakpoints.findByAlias(alias);
       this._activateByQuery(bp ? bp.mediaQuery : alias);
     };
     aliases.split(',').forEach(alias => activate(alias.trim()));
@@ -128,11 +126,10 @@ export class MockMatchMedia extends MatchMedia {
   /**
    *
    */
-  private _activateByQuery(mediaQuery) {
-    let mql = <MockMediaQueryList> this._registry.get(mediaQuery);
-    let alreadyAdded = this._actives.reduce((found, it) => {
-      return found || (mql && (it.media === mql.media));
-    }, false);
+  private _activateByQuery(mediaQuery: string) {
+    const mql = this._registry.get(mediaQuery);
+    const alreadyAdded = this._actives
+      .reduce((found, it) => (found || (mql ? (it.media === mql.media) : false)), false);
 
     if (mql && !alreadyAdded) {
       this._actives.push(mql.activate());
@@ -153,7 +150,7 @@ export class MockMatchMedia extends MatchMedia {
   }
 
   /** Insure the mediaQuery is registered with MatchMedia */
-  private _registerMediaQuery(mediaQuery) {
+  private _registerMediaQuery(mediaQuery: string) {
     if (!this._registry.has(mediaQuery) && this.autoRegisterQueries) {
       this.registerQuery(mediaQuery);
     }
@@ -168,7 +165,7 @@ export class MockMatchMedia extends MatchMedia {
   }
 
   protected get hasActivated() {
-    return (this._actives.length > 0);
+    return this._actives.length > 0;
   }
 
   private _actives: MockMediaQueryList[] = [];
@@ -207,7 +204,8 @@ export class MockMediaQueryList implements MediaQueryList {
     if (!this._isActive) {
       this._isActive = true;
       this._listeners.forEach((callback) => {
-        callback(this);
+        const cb: ((this: MediaQueryList, ev: MediaQueryListEvent) => any) = callback!;
+        cb.call(null, this);
       });
     }
     return this;
@@ -218,7 +216,8 @@ export class MockMediaQueryList implements MediaQueryList {
     if (this._isActive) {
       this._isActive = false;
       this._listeners.forEach((callback) => {
-        callback(this);
+        const cb: ((this: MediaQueryList, ev: MediaQueryListEvent) => any) = callback!;
+        cb.call(null, this);
       });
     }
     return this;
@@ -230,13 +229,40 @@ export class MockMediaQueryList implements MediaQueryList {
       this._listeners.push(listener);
     }
     if (this._isActive) {
-      listener(this);
+      const cb: ((this: MediaQueryList, ev: MediaQueryListEvent) => any) = listener!;
+      cb.call(null, this);
     }
   }
 
   /** Don't need to remove listeners in the testing environment */
-  removeListener(_: MediaQueryListListener) {
+  removeListener(_: EventListenerOrEventListenerObject | null) {
   }
+
+  addEventListener<K extends keyof
+    MediaQueryListEventMap>(_: K,
+                            __: (this: MediaQueryList,
+                                 ev: MediaQueryListEventMap[K]) => any,
+                            ___?: boolean | AddEventListenerOptions): void;
+  addEventListener(_: string,
+                   __: EventListenerOrEventListenerObject,
+                   ___?: boolean | AddEventListenerOptions) {
+  }
+
+  removeEventListener<K extends keyof
+    MediaQueryListEventMap>(_: K,
+                            __: (this: MediaQueryList,
+                                  ev: MediaQueryListEventMap[K]) => any,
+                            ___?: boolean | EventListenerOptions): void;
+  removeEventListener(_: string,
+                      __: EventListenerOrEventListenerObject,
+                      ___?: boolean | EventListenerOptions) {
+  }
+
+  dispatchEvent(_: Event): boolean {
+    return false;
+  }
+
+  onchange: MediaQueryListListener = null;
 }
 
 /**
@@ -247,4 +273,4 @@ export const MockMatchMediaProvider = {  // tslint:disable-line:variable-name
   useClass: MockMatchMedia
 };
 
-
+type MediaQueryListListener = ((this: MediaQueryList, ev: MediaQueryListEvent) => any) | null;

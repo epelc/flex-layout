@@ -5,11 +5,18 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {Component, OnInit, PLATFORM_ID} from '@angular/core';
+import {Component, Injectable, OnInit, PLATFORM_ID} from '@angular/core';
 import {CommonModule, isPlatformServer} from '@angular/common';
 import {TestBed, ComponentFixture, async, inject} from '@angular/core/testing';
 import {DIR_DOCUMENT} from '@angular/cdk/bidi';
-import {SERVER_TOKEN, StyleUtils} from '@angular/flex-layout/core';
+import {
+  MatchMedia,
+  MockMatchMedia,
+  MockMatchMediaProvider,
+  SERVER_TOKEN,
+  StyleBuilder,
+  StyleUtils,
+} from '@angular/flex-layout/core';
 
 import {FlexLayoutModule} from '../../module';
 import {customMatchers, expect} from '../../utils/testing/custom-matchers';
@@ -19,15 +26,20 @@ import {
   makeCreateTestComponent,
   queryFor,
 } from '../../utils/testing/helpers';
+import {FlexModule} from '../module';
+import {LayoutGapStyleBuilder} from './layout-gap';
 
 describe('layout-gap directive', () => {
   let fixture: ComponentFixture<any>;
   let fakeDocument: {body: {dir?: string}, documentElement: {dir?: string}};
   let styler: StyleUtils;
   let platformId: Object;
+  let matchMedia: MockMatchMedia;
   let createTestComponent = (template: string, styles?: any) => {
     fixture = makeCreateTestComponent(() => TestLayoutGapComponent)(template, styles);
-    inject([StyleUtils, PLATFORM_ID], (_styler: StyleUtils, _platformId: Object) => {
+    inject([MatchMedia, StyleUtils, PLATFORM_ID],
+      (_matchMedia: MockMatchMedia, _styler: StyleUtils, _platformId: Object) => {
+      matchMedia = _matchMedia;
       styler = _styler;
       platformId = _platformId;
     })();
@@ -42,6 +54,7 @@ describe('layout-gap directive', () => {
       imports: [CommonModule, FlexLayoutModule],
       declarations: [TestLayoutGapComponent],
       providers: [
+        MockMatchMediaProvider,
         {provide: DIR_DOCUMENT, useValue: fakeDocument},
         {provide: SERVER_TOKEN, useValue: true}
       ]
@@ -325,7 +338,110 @@ describe('layout-gap directive', () => {
   });
 
   describe('with responsive features', () => {
-    // TODO(ThomasBurleson): add tests here
+    it('should set gap on breakpoint change', () => {
+      let template = `
+        <div fxLayoutAlign='center center' fxLayoutGap='13px' fxLayoutGap.md="24px">
+          <div fxFlex></div>
+          <div fxFlex></div>
+          <div fxFlex></div>
+        </div>
+      `;
+      createTestComponent(template);
+      fixture.detectChanges();
+
+      let nodes = queryFor(fixture, '[fxFlex]');
+      expect(nodes.length).toEqual(3);
+      expectEl(nodes[0]).toHaveStyle({'margin-right': '13px'}, styler);
+      expectEl(nodes[1]).toHaveStyle({'margin-right': '13px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '13px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '0px'}, styler);
+
+      matchMedia.activate('md');
+      fixture.detectChanges();
+      expectEl(nodes[0]).toHaveStyle({'margin-right': '24px'}, styler);
+      expectEl(nodes[1]).toHaveStyle({'margin-right': '24px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '24px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '0px'}, styler);
+    });
+
+    it('should set gap without fallback', () => {
+      let template = `
+        <div fxLayoutAlign='center center' fxLayoutGap.md="24px">
+          <div fxFlex></div>
+          <div fxFlex></div>
+          <div fxFlex></div>
+        </div>
+      `;
+      createTestComponent(template);
+      fixture.detectChanges();
+
+      let nodes = queryFor(fixture, '[fxFlex]');
+      expect(nodes.length).toEqual(3);
+      expectEl(nodes[0]).not.toHaveStyle({'margin-right': '*'}, styler);
+      expectEl(nodes[1]).not.toHaveStyle({'margin-right': '*'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '*'}, styler);
+
+      matchMedia.activate('md');
+      fixture.detectChanges();
+      expectEl(nodes[0]).toHaveStyle({'margin-right': '24px'}, styler);
+      expectEl(nodes[1]).toHaveStyle({'margin-right': '24px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '24px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '0px'}, styler);
+    });
+
+    it('should set gap with responsive layout change', () => {
+      let template = `
+        <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="24px">
+          <div fxFlex></div>
+          <div fxFlex></div>
+          <div fxFlex></div>
+        </div>
+      `;
+      createTestComponent(template);
+      fixture.detectChanges();
+
+      let nodes = queryFor(fixture, '[fxFlex]');
+      expect(nodes.length).toEqual(3);
+      expectEl(nodes[0]).toHaveStyle({'margin-right': '24px'}, styler);
+      expectEl(nodes[1]).toHaveStyle({'margin-right': '24px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '*'}, styler);
+
+      matchMedia.activate('xs');
+      fixture.detectChanges();
+      expectEl(nodes[0]).toHaveStyle({'margin-bottom': '24px'}, styler);
+      expectEl(nodes[1]).toHaveStyle({'margin-bottom': '24px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-bottom': '*'}, styler);
+    });
+
+    it('should work with responsive fxHide', () => {
+      let template = `
+        <div fxLayoutAlign="center center" fxLayoutGap="13px">
+          <div fxFlex="15" class="sec1" fxFlex.xs="55"></div>
+          <div fxFlex="30" class="sec2" fxFlex.sm></div>
+          <div fxFlex="55" class="sec3" fxShow fxHide.sm></div>
+        </div>
+      `;
+      createTestComponent(template);
+      fixture.detectChanges();
+
+      let nodes = queryFor(fixture, '[fxFlex]');
+      expect(nodes.length).toEqual(3);
+      expectEl(nodes[0]).toHaveStyle({'margin-right': '13px'}, styler);
+      expectEl(nodes[1]).toHaveStyle({'margin-right': '13px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '*'}, styler);
+
+      matchMedia.activate('sm');
+      fixture.detectChanges();
+      expectEl(nodes[0]).toHaveStyle({'margin-right': '13px'}, styler);
+      expectEl(nodes[1]).not.toHaveStyle({'margin-right': '*'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '*'}, styler);
+
+      matchMedia.activate('lg');
+      fixture.detectChanges();
+      expectEl(nodes[0]).toHaveStyle({'margin-right': '13px'}, styler);
+      expectEl(nodes[1]).toHaveStyle({'margin-right': '13px'}, styler);
+      expectEl(nodes[2]).not.toHaveStyle({'margin-right': '*'}, styler);
+    });
   });
 
   describe('rtl support', () => {
@@ -390,7 +506,47 @@ describe('layout-gap directive', () => {
     });
   });
 
+  describe('with custom builder', () => {
+    beforeEach(() => {
+      jasmine.addMatchers(customMatchers);
+
+      // Configure testbed to prepare services
+      TestBed.configureTestingModule({
+        imports: [
+          CommonModule,
+          FlexLayoutModule.withConfig({
+            useColumnBasisZero: false,
+            serverLoaded: true,
+          }),
+        ],
+        declarations: [],
+        providers: [
+          {
+            provide: LayoutGapStyleBuilder,
+            useClass: MockLayoutGapStyleBuilder,
+          }
+        ]
+      });
+    });
+
+    it('should set gap not to input', async(() => {
+      createTestComponent(`
+        <div fxLayoutGap='10px'>
+          <div fxFlexOffset="25"></div>
+        </div>
+      `);
+      expectNativeEl(fixture).toHaveStyle({'margin-top': '12px'}, styler);
+    }));
+  });
+
 });
+
+@Injectable({providedIn: FlexModule})
+export class MockLayoutGapStyleBuilder extends StyleBuilder {
+  buildStyles(_input: string) {
+    return {'margin-top': '12px'};
+  }
+}
 
 
 // *****************************************************************

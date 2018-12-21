@@ -5,7 +5,7 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import {Component, PLATFORM_ID, ViewChild} from '@angular/core';
+import {Component, Injectable, PLATFORM_ID, ViewChild} from '@angular/core';
 import {CommonModule, isPlatformServer} from '@angular/common';
 import {ComponentFixture, TestBed, async, inject} from '@angular/core/testing';
 import {Platform} from '@angular/cdk/platform';
@@ -13,12 +13,13 @@ import {
   MatchMedia,
   MockMatchMedia,
   MockMatchMediaProvider,
+  StyleBuilder,
   StyleUtils,
 } from '@angular/flex-layout/core';
 
 import {FlexLayoutModule} from '../../module';
-import {FlexDirective} from './flex';
-import {LayoutDirective} from '../layout/layout';
+import {DefaultFlexDirective, FlexStyleBuilder} from './flex';
+import {DefaultLayoutDirective} from '../layout/layout';
 import {customMatchers, expect} from '../../utils/testing/custom-matchers';
 import {
   makeCreateTestComponent,
@@ -100,6 +101,77 @@ describe('flex directive', () => {
       expectEl(element).toHaveStyle({'width': '15px'}, styler);
       expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
       expectEl(element).toHaveStyle({'flex': '10 1 auto'}, styler);
+    });
+
+    it('should add correct styles for `fxFlex` with multiple layout changes and wraps', () => {
+      componentWithTemplate(`
+        <div [fxLayout]="direction + ' wrap'" fxLayoutAlign="start center">
+          <div fxFlex="30"></div>
+        </div>
+      `);
+      fixture.detectChanges();
+      let element = queryFor(fixture, '[fxFlex]')[0];
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'column'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-height': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'row';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'row'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-width': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'column';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'column'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-height': '30%'}, styler);
+    });
+
+    it('should add correct styles for `fxFlex` with gap in grid mode and wrap parent', () => {
+      componentWithTemplate(`
+        <div [fxLayout]="direction + ' wrap'" fxLayoutGap="10px grid">
+          <div fxFlex="30"></div>
+          <div fxFlex="30"></div>
+          <div fxFlex="30"></div>
+        </div>
+      `);
+      fixture.debugElement.componentInstance.direction = 'row';
+      fixture.detectChanges();
+      let element = queryFor(fixture, '[fxFlex]')[0];
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'row'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-width': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'row-reverse';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'row-reverse'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-width': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'column';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'column'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-height': '30%'}, styler);
+
+      fixture.debugElement.componentInstance.direction = 'column-reverse';
+      fixture.detectChanges();
+
+      expectNativeEl(fixture).toHaveStyle({'flex-direction': 'column-reverse'}, styler);
+      expectEl(element).toHaveStyle({'box-sizing': 'border-box'}, styler);
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
+      expectEl(element).toHaveStyle({'max-height': '30%'}, styler);
     });
 
     it('should add correct styles for `fxFlex` and ngStyle with multiple layout changes', () => {
@@ -496,6 +568,15 @@ describe('flex directive', () => {
       }, styler);
     });
 
+    it('should set a min-width and max-width when basis is a rem value', () => {
+      componentWithTemplate(`<div fxFlex='12rem'></div>`);
+      expectNativeEl(fixture).toHaveStyle({
+        'flex': '1 1 12rem',
+        'max-width': '12rem',
+        'min-width': '12rem'
+      }, styler);
+    });
+
     describe('', () => {
 
       it('should ignore fxLayout settings on same element', () => {
@@ -689,7 +770,7 @@ describe('flex directive', () => {
         fixture = TestBed.createComponent(TestQueryWithFlexComponent);
         fixture.detectChanges();
 
-        const layout: LayoutDirective = fixture.debugElement.componentInstance.layout;
+        const layout: DefaultLayoutDirective = fixture.debugElement.componentInstance.layout;
 
         expect(layout).toBeDefined();
         expect(layout.activatedValue).toBe('');
@@ -704,13 +785,12 @@ describe('flex directive', () => {
         }, _styler);
       })
     );
-
     it('should query the ViewChild `fxFlex` directive properly', inject([StyleUtils],
       (_styler: StyleUtils) => {
         fixture = TestBed.createComponent(TestQueryWithFlexComponent);
         fixture.detectChanges();
 
-        const flex: FlexDirective = fixture.debugElement.componentInstance.flex;
+        const flex: DefaultFlexDirective = fixture.debugElement.componentInstance.flex;
 
         // Test for percentage value assignments
         expect(flex).toBeDefined();
@@ -737,14 +817,13 @@ describe('flex directive', () => {
         expectEl(nodes[0]).toHaveStyle({'max-width': '27.5px'}, _styler);
       })
     );
-
     it('should restore `fxFlex` value after breakpoint activations',
       inject([MatchMedia, StyleUtils],
         (_matchMedia: MockMatchMedia, _styler: StyleUtils) => {
           fixture = TestBed.createComponent(TestQueryWithFlexComponent);
           fixture.detectChanges();
 
-          const flex: FlexDirective = fixture.debugElement.componentInstance.flex;
+          const flex: DefaultFlexDirective = fixture.debugElement.componentInstance.flex;
 
           // Test for raw value assignments that are converted to percentages
           expect(flex).toBeDefined();
@@ -856,6 +935,7 @@ describe('flex directive', () => {
   });
 
   describe('with column basis zero disabled', () => {
+    let styleBuilder: FlexStyleBuilder;
     beforeEach(() => {
       jasmine.addMatchers(customMatchers);
 
@@ -873,19 +953,67 @@ describe('flex directive', () => {
       });
     });
 
-    it('should set flex basis to auto', async(() => {
+    it('should set flex basis to auto', () => {
       componentWithTemplate(`
         <div fxLayout='column'>
           <div fxFlex></div>
         </div>
       `);
+      styleBuilder = TestBed.get(FlexStyleBuilder);
+
+      // Reset the cache because the layout config is only set at startup
+      styleBuilder.shouldCache = false;
       fixture.detectChanges();
       let element = queryFor(fixture, '[fxFlex]')[0];
       expectEl(element).toHaveStyle({'flex': '1 1 auto'}, styler);
+    });
+  });
+
+  describe('with custom builder', () => {
+    beforeEach(() => {
+      jasmine.addMatchers(customMatchers);
+
+      // Configure testbed to prepare services
+      TestBed.configureTestingModule({
+        imports: [
+          CommonModule,
+          FlexLayoutModule.withConfig({
+            useColumnBasisZero: false,
+            serverLoaded: true,
+          }),
+        ],
+        declarations: [TestFlexComponent, TestQueryWithFlexComponent],
+        providers: [
+          MockMatchMediaProvider,
+          {
+            provide: FlexStyleBuilder,
+            useClass: MockFlexStyleBuilder,
+          }
+        ]
+      });
+    });
+
+    it('should set flex basis to input', async(() => {
+      componentWithTemplate(`
+        <div fxLayout='column'>
+          <div fxFlex="25"></div>
+        </div>
+      `);
+      fixture.detectChanges();
+      let element = queryFor(fixture, '[fxFlex]')[0];
+      expectEl(element).toHaveStyle({'flex': '1 1 30%'}, styler);
     }));
   });
 
 });
+
+@Injectable()
+export class MockFlexStyleBuilder extends StyleBuilder {
+  shouldCache = false;
+  buildStyles(_input: string) {
+    return {'flex': '1 1 30%'};
+  }
+}
 
 
 // *****************************************************************
@@ -909,6 +1037,6 @@ class TestFlexComponent {
   `
 })
 class TestQueryWithFlexComponent {
-  @ViewChild(FlexDirective) flex: FlexDirective;
-  @ViewChild(LayoutDirective) layout: LayoutDirective;
+  @ViewChild(DefaultFlexDirective) flex!: DefaultFlexDirective;
+  @ViewChild(DefaultLayoutDirective) layout!: DefaultLayoutDirective;
 }

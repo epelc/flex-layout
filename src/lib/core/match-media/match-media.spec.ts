@@ -6,14 +6,13 @@
  * found in the LICENSE file at https://angular.io/license
  */
 import {TestBed, inject, async} from '@angular/core/testing';
-import {Observable} from 'rxjs';
 
 import {MediaChange} from '../media-change';
 import {BreakPoint} from '../breakpoints/break-point';
 import {MockMatchMedia, MockMatchMediaProvider} from './mock/mock-match-media';
 import {BreakPointRegistry} from '../breakpoints/break-point-registry';
 import {MatchMedia} from './match-media';
-import {ObservableMedia, ObservableMediaProvider} from '../observable-media/observable-media';
+import {MediaObserver} from '../media-observer/media-observer';
 
 describe('match-media', () => {
   let matchMedia: MockMatchMedia;
@@ -26,7 +25,7 @@ describe('match-media', () => {
   });
 
   // Single async inject to save references; which are used in all tests below
-  beforeEach(async(inject([MatchMedia], (service) => {
+  beforeEach(async(inject([MatchMedia], (service: MockMatchMedia) => {
     matchMedia = service;      // inject only to manually activate mediaQuery ranges
   })));
   afterEach(() => {
@@ -112,22 +111,23 @@ describe('match-media', () => {
 describe('match-media-observable', () => {
   let breakPoints: BreakPointRegistry;
   let matchMedia: MockMatchMedia;
-  let mediaQuery$: Observable<MediaChange>;
+  let mediaObserver: MediaObserver;
 
   beforeEach(() => {
     // Configure testbed to prepare services
     TestBed.configureTestingModule({
-      providers: [MockMatchMediaProvider, ObservableMediaProvider]
+      providers: [MockMatchMediaProvider]
     });
   });
 
   // Single async inject to save references; which are used in all tests below
   beforeEach(async(inject(
-    [ObservableMedia, MatchMedia, BreakPointRegistry],
-    (_media$, _matchMedia, _breakPoints) => {
+    [MediaObserver, MatchMedia, BreakPointRegistry],
+    (_mediaObserver: MediaObserver, _matchMedia: MockMatchMedia,
+     _breakPoints: BreakPointRegistry) => {
       matchMedia = _matchMedia;      // inject only to manually activate mediaQuery ranges
       breakPoints = _breakPoints;
-      mediaQuery$ = _media$;
+      mediaObserver = _mediaObserver;
 
       // Quick register all breakpoint mediaQueries
       breakPoints.items.forEach((bp: BreakPoint) => {
@@ -142,7 +142,7 @@ describe('match-media-observable', () => {
     let current: MediaChange;
     let bp = breakPoints.findByAlias('md') !;
     matchMedia.activate(bp.mediaQuery);
-    let subscription = mediaQuery$.subscribe((change: MediaChange) => {
+    let subscription = mediaObserver.media$.subscribe((change: MediaChange) => {
       current = change;
     });
 
@@ -155,7 +155,7 @@ describe('match-media-observable', () => {
 
   it('can observe the initial, default activation for mediaQuery == "all". ', () => {
     let current: MediaChange;
-    let subscription = mediaQuery$.subscribe((change: MediaChange) => {
+    let subscription = mediaObserver.media$.subscribe((change: MediaChange) => {
       current = change;
     });
 
@@ -169,7 +169,7 @@ describe('match-media-observable', () => {
   it('can observe custom mediaQuery ranges', () => {
     let current: MediaChange;
     let customQuery = 'screen and (min-width: 610px) and (max-width: 620px';
-    let subscription = mediaQuery$.subscribe((change: MediaChange) => {
+    let subscription = mediaObserver.media$.subscribe((change: MediaChange) => {
       current = change;
     });
 
@@ -185,7 +185,7 @@ describe('match-media-observable', () => {
   it('can observe registered breakpoint activations', () => {
     let current: MediaChange;
     let bp = breakPoints.findByAlias('md') !;
-    let subscription = mediaQuery$.subscribe((change: MediaChange) => {
+    let subscription = mediaObserver.media$.subscribe((change: MediaChange) => {
       current = change;
     });
 
@@ -206,7 +206,7 @@ describe('match-media-observable', () => {
   it('ignores mediaQuery de-activations', () => {
     let activationCount = 0;
     let deactivationCount = 0;
-    let subscription = mediaQuery$.subscribe((change: MediaChange) => {
+    let subscription = mediaObserver.media$.subscribe((change: MediaChange) => {
       if (change.matches) {
         ++activationCount;
       } else {

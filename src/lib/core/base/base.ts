@@ -21,12 +21,14 @@ import {
 import {ResponsiveActivation, KeyOptions} from '../responsive-activation/responsive-activation';
 import {MediaMonitor} from '../media-monitor/media-monitor';
 import {MediaQuerySubscriber} from '../media-change';
+import {StyleBuilder} from '../style-builder/style-builder';
 
-/** Abstract base class for the Layout API styling directives. */
+/**
+ * Abstract base class for the Layout API styling directives.
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
+ */
 export abstract class BaseDirective implements OnDestroy, OnChanges {
-  get hasMediaQueryListener() {
-    return !!this._mqActivation;
-  }
 
   /**
    * Imperatively determine the current activated [input] value;
@@ -51,14 +53,15 @@ export abstract class BaseDirective implements OnDestroy, OnChanges {
       previousVal = this._inputMap[key];
       this._inputMap[key] = value;
     }
-    let change = new SimpleChange(previousVal, value, false);
+    const change = new SimpleChange(previousVal, value, false);
 
     this.ngOnChanges({[key]: change} as SimpleChanges);
   }
 
   protected constructor(protected _mediaMonitor: MediaMonitor,
                         protected _elementRef: ElementRef,
-                        protected _styler: StyleUtils) {
+                        protected _styler: StyleUtils,
+                        protected _styleBuilder?: StyleBuilder) {
   }
 
   /**
@@ -107,8 +110,26 @@ export abstract class BaseDirective implements OnDestroy, OnChanges {
     return this._elementRef.nativeElement;
   }
 
+  /** Add styles to the element using predefined style builder */
+  protected addStyles(input: string, parent?: Object) {
+    const builder = this._styleBuilder!;
+    const useCache = builder.shouldCache;
+
+    let genStyles: StyleDefinition | undefined = this._styleCache.get(input);
+
+    if (!genStyles || !useCache) {
+      genStyles = builder.buildStyles(input, parent);
+      if (useCache) {
+        this._styleCache.set(input, genStyles);
+      }
+    }
+
+    this._applyStyleToElement(genStyles);
+    builder.sideEffect(input, genStyles, parent);
+  }
+
   /** Access the current value (if any) of the @Input property */
-  protected _queryInput(key) {
+  protected _queryInput(key: string) {
     return this._inputMap[key];
   }
 
@@ -117,8 +138,8 @@ export abstract class BaseDirective implements OnDestroy, OnChanges {
    * If not, use the fallback value!
    */
   protected _getDefaultVal(key: string, fallbackVal: any): string | boolean {
-    let val = this._queryInput(key);
-    let hasDefaultVal = (val !== undefined && val !== null);
+    const val = this._queryInput(key);
+    const hasDefaultVal = (val !== undefined && val !== null);
     return (hasDefaultVal && val !== '') ? val : fallbackVal;
   }
 
@@ -145,20 +166,19 @@ export abstract class BaseDirective implements OnDestroy, OnChanges {
    * And optionally add the flow value to element's inline style.
    */
   protected _getFlexFlowDirection(target: HTMLElement, addIfMissing = false): string {
-    let value = 'row';
-    let hasInlineValue = '';
-
     if (target) {
-      [value, hasInlineValue] = this._styler.getFlowDirection(target);
+      let [value, hasInlineValue] = this._styler.getFlowDirection(target);
 
       if (!hasInlineValue && addIfMissing) {
         const style = buildLayoutCSS(value);
         const elements = [target];
         this._styler.applyStyleToElements(style, elements);
       }
+
+      return value.trim();
     }
 
-    return value.trim() || 'row';
+    return 'row';
   }
 
   /** Applies styles given via string pair or object map to the directive element */
@@ -206,7 +226,7 @@ export abstract class BaseDirective implements OnDestroy, OnChanges {
   }
 
   /** Special accessor to query for all child 'element' nodes regardless of type, class, etc */
-  protected get childrenNodes() {
+  protected get childrenNodes(): HTMLElement[] {
     const obj = this.nativeElement.children;
     const buffer: any[] = [];
 
@@ -217,20 +237,15 @@ export abstract class BaseDirective implements OnDestroy, OnChanges {
     return buffer;
   }
 
-  /** Fast validator for presence of attribute on the host element */
-  protected hasKeyValue(key) {
-    return this._mqActivation.hasKeyValue(key);
-  }
-
   protected get hasInitialized() {
     return this._hasInitialized;
   }
 
   /** MediaQuery Activation Tracker */
-  protected _mqActivation: ResponsiveActivation;
+  protected _mqActivation?: ResponsiveActivation;
 
   /** Dictionary of input keys with associated values */
-  protected _inputMap = {};
+  protected _inputMap: {[key: string]: any} = {};
 
   /**
    * Has the `ngOnInit()` method fired
@@ -239,4 +254,7 @@ export abstract class BaseDirective implements OnDestroy, OnChanges {
    * getComputedStyle() during ngOnInit().
    */
   protected _hasInitialized = false;
+
+  /** Cache map for style computation */
+  protected _styleCache: Map<string, StyleDefinition> = new Map();
 }

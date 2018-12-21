@@ -15,9 +15,9 @@ import {
   MockMatchMediaProvider,
   StyleUtils,
 } from '@angular/flex-layout/core';
-import {LayoutDirective} from '@angular/flex-layout/flex';
+import {DefaultLayoutDirective} from '@angular/flex-layout/flex';
 
-import {StyleDirective} from './style';
+import {DefaultStyleDirective} from './style';
 import {customMatchers} from '../../utils/testing/custom-matchers';
 import {
   makeCreateTestComponent, expectNativeEl
@@ -27,7 +27,7 @@ describe('style directive', () => {
   let fixture: ComponentFixture<any>;
   let matchMedia: MockMatchMedia;
   let styler: StyleUtils;
-  let createTestComponent = (template) => {
+  let createTestComponent = (template: string) => {
     fixture = makeCreateTestComponent(() => TestStyleComponent)(template);
 
     inject([MatchMedia, StyleUtils], (_matchMedia: MockMatchMedia, _styler: StyleUtils) => {
@@ -42,7 +42,7 @@ describe('style directive', () => {
     // Configure testbed to prepare services
     TestBed.configureTestingModule({
       imports: [CommonModule, CoreModule],
-      declarations: [TestStyleComponent, LayoutDirective, StyleDirective],
+      declarations: [TestStyleComponent, DefaultLayoutDirective, DefaultStyleDirective],
       providers: [MockMatchMediaProvider]
     });
   });
@@ -144,6 +144,30 @@ describe('style directive', () => {
     matchMedia.activate('xs');
     expectNativeEl(fixture, {fontSize: 19}).toHaveStyle({'font-size': '19px'}, styler);
   });
+
+  it('should work with URLs', () => {
+    createTestComponent(`
+        <div [ngStyle]="{'background-image': 'url(' + testUrl + ')', 'height': '300px'}">
+        </div>
+    `);
+    fixture.detectChanges();
+    const url = styler.lookupStyle(fixture.debugElement.children[0].nativeElement,
+      'background-image');
+    const isUrl = url === `url("${URL}")` || url === `url(${URL})`;
+    expect(isUrl).toBeTruthy();
+  });
+
+  it('should work with just ngStyle and preexisting styles', () => {
+    createTestComponent(`
+      <div style="background-color: red; height: 100px; width: 100px;" [ngStyle]="divStyle">
+        First div
+      </div>
+    `);
+    expectNativeEl(fixture).toHaveStyle({'background-color': 'red'}, styler);
+    expectNativeEl(fixture).toHaveStyle({'height': '100px'}, styler);
+    expectNativeEl(fixture).toHaveStyle({'width': '100px'}, styler);
+    expectNativeEl(fixture).toHaveStyle({'border': '2px solid green'}, styler);
+  });
 });
 
 // *****************************************************************
@@ -155,8 +179,10 @@ describe('style directive', () => {
   template: `<span>PlaceHolder Template HTML</span>`
 })
 class TestStyleComponent {
-  fontSize: number;
+  fontSize: number = 0;
+  testUrl = URL;
+  divStyle = {'border': '2px solid green'};
 }
 
-
-
+const URL = 'https://cloud.githubusercontent.com/assets/210413/' +
+  '21288118/917e3faa-c440-11e6-9b08-28aff590c7ae.png';

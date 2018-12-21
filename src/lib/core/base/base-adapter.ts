@@ -17,6 +17,8 @@ import {StyleUtils} from '../style-utils/style-utils';
 /**
  * Adapter to the BaseDirective abstract class so it can be used via composition.
  * @see BaseDirective
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
  */
 export class BaseDirectiveAdapter extends BaseDirective {
 
@@ -40,7 +42,7 @@ export class BaseDirectiveAdapter extends BaseDirective {
    * @see BaseDirective._mqActivation
    */
   get mqActivation(): ResponsiveActivation {
-    return this._mqActivation;
+    return this._mqActivation!;
   }
 
   /**
@@ -64,7 +66,7 @@ export class BaseDirectiveAdapter extends BaseDirective {
   /**
    * @see BaseDirective._queryInput
    */
-  queryInput(key) {
+  queryInput(key: string | null) {
     return key ? this._queryInput(key) : undefined;
   }
 

@@ -5,177 +5,49 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
+import {Directive, ElementRef, Inject, Injectable, Input} from '@angular/core';
 import {
-  Directive,
-  ElementRef,
-  Inject,
-  Input,
-  OnChanges,
-  OnDestroy,
-  OnInit,
-  Optional,
-  SimpleChanges,
-  SkipSelf,
-} from '@angular/core';
-import {
-  BaseDirective,
+  BaseDirective2,
   LayoutConfigOptions,
   LAYOUT_CONFIG,
-  MediaChange,
-  MediaMonitor,
   StyleUtils,
   validateBasis,
+  StyleBuilder,
+  StyleDefinition,
+  MediaMarshaller,
+  ElementMatcher,
 } from '@angular/flex-layout/core';
-import {Subscription} from 'rxjs';
+import {takeUntil} from 'rxjs/operators';
 
 import {extendObject} from '../../utils/object-extend';
-import {Layout, LayoutDirective} from '../layout/layout';
 import {isFlowHorizontal} from '../../utils/layout-validator';
 
+interface FlexBuilderParent {
+  direction: string;
+  hasWrap: boolean;
+}
 
-/** Built-in aliases for different flex-basis values. */
-export type FlexBasisAlias = 'grow' | 'initial' | 'auto' | 'none' | 'nogrow' | 'noshrink';
-
-
-/**
- * Directive to control the size of a flex item using flex-basis, flex-grow, and flex-shrink.
- * Corresponds to the css `flex` shorthand property.
- *
- * @see https://css-tricks.com/snippets/css/a-guide-to-flexbox/
- */
-@Directive({selector: `
-  [fxFlex],
-  [fxFlex.xs], [fxFlex.sm], [fxFlex.md], [fxFlex.lg], [fxFlex.xl],
-  [fxFlex.lt-sm], [fxFlex.lt-md], [fxFlex.lt-lg], [fxFlex.lt-xl],
-  [fxFlex.gt-xs], [fxFlex.gt-sm], [fxFlex.gt-md], [fxFlex.gt-lg],
-`
-})
-export class FlexDirective extends BaseDirective implements OnInit, OnChanges, OnDestroy {
-
-  /** The flex-direction of this element's flex container. Defaults to 'row'. */
-  protected _layout: Layout;
-
-  /**
-   * Subscription to the parent flex container's layout changes.
-   * Stored so we can unsubscribe when this directive is destroyed.
-   */
-  protected _layoutWatcher: Subscription;
-
-  /* tslint:disable */
-  @Input('fxShrink')     set shrink(val)    { this._cacheInput('shrink', val); };
-  @Input('fxGrow')       set grow(val)      { this._cacheInput('grow', val); };
-
-  @Input('fxFlex')       set flex(val)      { this._cacheInput('flex', val); };
-  @Input('fxFlex.xs')    set flexXs(val)    { this._cacheInput('flexXs', val); };
-  @Input('fxFlex.sm')    set flexSm(val)    { this._cacheInput('flexSm', val); };
-  @Input('fxFlex.md')    set flexMd(val)    { this._cacheInput('flexMd', val); };
-  @Input('fxFlex.lg')    set flexLg(val)    { this._cacheInput('flexLg', val); };
-  @Input('fxFlex.xl')    set flexXl(val)    { this._cacheInput('flexXl', val); };
-
-  @Input('fxFlex.gt-xs') set flexGtXs(val)  { this._cacheInput('flexGtXs', val); };
-  @Input('fxFlex.gt-sm') set flexGtSm(val)  { this._cacheInput('flexGtSm', val); };
-  @Input('fxFlex.gt-md') set flexGtMd(val)  { this._cacheInput('flexGtMd', val); };
-  @Input('fxFlex.gt-lg') set flexGtLg(val)  { this._cacheInput('flexGtLg', val); };
-
-  @Input('fxFlex.lt-sm') set flexLtSm(val) { this._cacheInput('flexLtSm', val); };
-  @Input('fxFlex.lt-md') set flexLtMd(val) { this._cacheInput('flexLtMd', val); };
-  @Input('fxFlex.lt-lg') set flexLtLg(val) { this._cacheInput('flexLtLg', val); };
-  @Input('fxFlex.lt-xl') set flexLtXl(val) { this._cacheInput('flexLtXl', val); };
-  /* tslint:enable */
-
-  // Note: Explicitly @SkipSelf on LayoutDirective because we are looking
-  //       for the parent flex container for this flex item.
-  constructor(monitor: MediaMonitor,
-              elRef: ElementRef,
-              @Optional() @SkipSelf() protected _container: LayoutDirective,
-              protected styleUtils: StyleUtils,
-              @Inject(LAYOUT_CONFIG) protected layoutConfig: LayoutConfigOptions) {
-    super(monitor, elRef, styleUtils);
-
-    this._cacheInput('flex', '');
-    this._cacheInput('shrink', 1);
-    this._cacheInput('grow', 1);
+@Injectable({providedIn: 'root'})
+export class FlexStyleBuilder extends StyleBuilder {
+  constructor(@Inject(LAYOUT_CONFIG) protected layoutConfig: LayoutConfigOptions) {
+    super();
   }
+  buildStyles(input: string, parent: FlexBuilderParent) {
+    let [grow, shrink, ...basisParts]: (string|number)[] = input.split(' ');
+    let basis = basisParts.join(' ');
 
-  /**
-   * For @Input changes on the current mq activation property, see onMediaQueryChanges()
-   */
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['flex'] != null || this._mqActivation) {
-      this._updateStyle();
-    }
-  }
-
-  /**
-   * After the initial onChanges, build an mqActivation object that bridges
-   * mql change events to onMediaQueryChange handlers
-   */
-  ngOnInit() {
-    super.ngOnInit();
-
-    this._listenForMediaQueryChanges('flex', '', (changes: MediaChange) => {
-      this._updateStyle(changes.value);
-    });
-
-    if (this._container) {
-      // If this flex item is inside of a flex container marked with
-      // Subscribe to layout immediate parent direction changes
-      this._layoutWatcher = this._container.layout$.subscribe((layout) => {
-        // `direction` === null if parent container does not have a `fxLayout`
-        this._onLayoutChange(layout);
-      });
-    }
-  }
-
-  ngOnDestroy() {
-    super.ngOnDestroy();
-    if (this._layoutWatcher) {
-      this._layoutWatcher.unsubscribe();
-    }
-  }
-
-
-  /**
-   * Caches the parent container's 'flex-direction' and updates the element's style.
-   * Used as a handler for layout change events from the parent flex container.
-   */
-  protected _onLayoutChange(layout?: Layout) {
-    this._layout = layout || this._layout || {direction: 'row', wrap: false};
-    this._updateStyle();
-  }
-
-  protected _updateStyle(value?: string|number) {
-    let flexBasis = value || this._queryInput('flex') || '';
-    if (this._mqActivation) {
-      flexBasis = this._mqActivation.activatedInput;
-    }
-
-    let basis = String(flexBasis).replace(';', '');
-    let parts = validateBasis(basis, this._queryInput('grow'), this._queryInput('shrink'));
-    this._applyStyleToElement(this._validateValue.apply(this, parts));
-  }
-
-  /**
-   * Validate the value to be one of the acceptable value options
-   * Use default fallback of 'row'
-   */
-  protected _validateValue(grow: number|string,
-                           shrink: number|string,
-                           basis: string|number|FlexBasisAlias) {
-    let addFlexToParent = this.layoutConfig.addFlexToParent !== false;
     // The flex-direction of this element's flex container. Defaults to 'row'.
-    let layout = this._getFlexFlowDirection(this.parentElement, addFlexToParent);
-    let direction = (layout.indexOf('column') > -1) ? 'column' : 'row';
+    const direction = (parent.direction.indexOf('column') > -1) ? 'column' : 'row';
 
-    let max = isFlowHorizontal(direction) ? 'max-width' : 'max-height';
-    let min = isFlowHorizontal(direction) ? 'min-width' : 'min-height';
+    const max = isFlowHorizontal(direction) ? 'max-width' : 'max-height';
+    const min = isFlowHorizontal(direction) ? 'min-width' : 'min-height';
 
-    let hasCalc = String(basis).indexOf('calc') > -1;
-    let usingCalc = hasCalc || (basis == 'auto');
-    let isPercent = String(basis).indexOf('%') > -1 && !hasCalc;
-    let hasUnits = String(basis).indexOf('px') > -1 || String(basis).indexOf('em') > -1 ||
-      String(basis).indexOf('vw') > -1 || String(basis).indexOf('vh') > -1;
-    let isPx = String(basis).indexOf('px') > -1 || usingCalc;
+    const hasCalc = String(basis).indexOf('calc') > -1;
+    const usingCalc = hasCalc || (basis === 'auto');
+    const isPercent = String(basis).indexOf('%') > -1 && !hasCalc;
+    const hasUnits = String(basis).indexOf('px') > -1 || String(basis).indexOf('rem') > -1 ||
+      String(basis).indexOf('em') > -1 || String(basis).indexOf('vw') > -1 ||
+      String(basis).indexOf('vh') > -1;
 
     let isValue = (hasCalc || hasUnits);
 
@@ -185,9 +57,9 @@ export class FlexDirective extends BaseDirective implements OnInit, OnChanges, O
     // make box inflexible when shrink and grow are both zero
     // should not set a min when the grow is zero
     // should not set a max when the shrink is zero
-    let isFixed = !grow && !shrink;
+    const isFixed = !grow && !shrink;
 
-    let css = {};
+    let css: {[key: string]: string | number | null} = {};
 
     // flex-basis allows you to specify the initial/starting main-axis size of the element,
     // before anything else is computed. It can either be a percentage or an absolute value.
@@ -201,7 +73,7 @@ export class FlexDirective extends BaseDirective implements OnInit, OnChanges, O
     //      with 'flex-grow: 1' on the same row.
 
     // Use `null` to clear existing styles.
-    let clearStyles = {
+    const clearStyles = {
       'max-width': null,
       'max-height': null,
       'min-width': null,
@@ -278,7 +150,7 @@ export class FlexDirective extends BaseDirective implements OnInit, OnChanges, O
 
     // Fix for issues 277, 534, and 728
     if (basis !== '0%' && basis !== '0px' && basis !== '0.000000001px' && basis !== 'auto') {
-      css[min] = isFixed || (isPx && grow) ? basis : null;
+      css[min] = isFixed || (isValue && grow) ? basis : null;
       css[max] = isFixed || (!usingCalc && shrink) ? basis : null;
     }
 
@@ -297,13 +169,122 @@ export class FlexDirective extends BaseDirective implements OnInit, OnChanges, O
       }
     } else {
       // Fix for issue 660
-      if (this._layout && this._layout.wrap) {
+      if (parent.hasWrap) {
         css[hasCalc ? 'flex-basis' : 'flex'] = css[max] ?
           (hasCalc ? css[max] : `${grow} ${shrink} ${css[max]}`) :
           (hasCalc ? css[min] : `${grow} ${shrink} ${css[min]}`);
       }
     }
 
-    return extendObject(css, {'box-sizing': 'border-box'});
+    return extendObject(css, {'box-sizing': 'border-box'}) as StyleDefinition;
   }
 }
+
+const inputs = [
+  'fxFlex', 'fxFlex.xs', 'fxFlex.sm', 'fxFlex.md',
+  'fxFlex.lg', 'fxFlex.xl', 'fxFlex.lt-sm', 'fxFlex.lt-md',
+  'fxFlex.lt-lg', 'fxFlex.lt-xl', 'fxFlex.gt-xs', 'fxFlex.gt-sm',
+  'fxFlex.gt-md', 'fxFlex.gt-lg'
+];
+const selector = `
+  [fxFlex], [fxFlex.xs], [fxFlex.sm], [fxFlex.md],
+  [fxFlex.lg], [fxFlex.xl], [fxFlex.lt-sm], [fxFlex.lt-md],
+  [fxFlex.lt-lg], [fxFlex.lt-xl], [fxFlex.gt-xs], [fxFlex.gt-sm],
+  [fxFlex.gt-md], [fxFlex.gt-lg]
+`;
+
+/**
+ * Directive to control the size of a flex item using flex-basis, flex-grow, and flex-shrink.
+ * Corresponds to the css `flex` shorthand property.
+ *
+ * @see https://css-tricks.com/snippets/css/a-guide-to-flexbox/
+ */
+export class FlexDirective extends BaseDirective2 {
+
+  protected DIRECTIVE_KEY = 'flex';
+  protected direction = '';
+  protected wrap = false;
+
+
+  @Input('fxShrink')
+  get shrink(): string { return this.flexShrink; }
+  set shrink(value: string) {
+    this.flexShrink = value || '1';
+    this.triggerReflow();
+  }
+
+  @Input('fxGrow')
+  get grow(): string { return this.flexGrow; }
+  set grow(value: string) {
+    this.flexGrow = value || '1';
+    this.triggerReflow();
+  }
+
+  protected flexGrow = '1';
+  protected flexShrink = '1';
+
+  constructor(protected elRef: ElementRef,
+              protected styleUtils: StyleUtils,
+              @Inject(LAYOUT_CONFIG) protected layoutConfig: LayoutConfigOptions,
+              protected styleBuilder: FlexStyleBuilder,
+              protected marshal: MediaMarshaller) {
+    super(elRef, styleBuilder, styleUtils, marshal);
+    this.init();
+    if (this.parentElement) {
+      this.marshal.trackValue(this.parentElement, 'layout')
+        .pipe(takeUntil(this.destroySubject))
+        .subscribe(this.onLayoutChange.bind(this));
+    }
+  }
+
+  /**
+   * Caches the parent container's 'flex-direction' and updates the element's style.
+   * Used as a handler for layout change events from the parent flex container.
+   */
+  protected onLayoutChange(matcher: ElementMatcher) {
+    const layout: string = matcher.value;
+    const layoutParts = layout.split(' ');
+    this.direction = layoutParts[0];
+    this.wrap = layoutParts[1] !== undefined && layoutParts[1] === 'wrap';
+    this.triggerUpdate();
+  }
+
+  /** Input to this is exclusively the basis input value */
+  protected updateWithValue(value: string) {
+    const addFlexToParent = this.layoutConfig.addFlexToParent !== false;
+    if (!this.direction) {
+      this.direction = this.getFlexFlowDirection(this.parentElement!, addFlexToParent);
+    }
+    const direction = this.direction;
+    const isHorizontal = direction.startsWith('row');
+    const hasWrap = this.wrap;
+    if (isHorizontal && hasWrap) {
+      this.styleCache = flexRowWrapCache;
+    } else if (isHorizontal && !hasWrap) {
+      this.styleCache = flexRowCache;
+    } else if (!isHorizontal && hasWrap) {
+      this.styleCache = flexColumnWrapCache;
+    } else if (!isHorizontal && !hasWrap) {
+      this.styleCache = flexColumnCache;
+    }
+    const basis = String(value).replace(';', '');
+    const parts = validateBasis(basis, this.flexGrow, this.flexShrink);
+    this.addStyles(parts.join(' '), {direction, hasWrap});
+  }
+
+  /** Trigger a style reflow, usually based on a shrink/grow input event */
+  protected triggerReflow() {
+    const parts = validateBasis(this.activatedValue, this.flexGrow, this.flexShrink);
+    this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
+  }
+}
+
+@Directive({inputs, selector})
+export class DefaultFlexDirective extends FlexDirective {
+  protected inputs = inputs;
+}
+
+const flexRowCache: Map<string, StyleDefinition> = new Map();
+const flexColumnCache: Map<string, StyleDefinition> = new Map();
+const flexRowWrapCache: Map<string, StyleDefinition> = new Map();
+const flexColumnWrapCache: Map<string, StyleDefinition> = new Map();
