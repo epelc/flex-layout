@@ -13,16 +13,16 @@
 
 /**
  * @fileoverview added by tsickle
- * @suppress {checkTypes} checked by tsc
+ * @suppress {checkTypes,extraRequire,uselessCode} checked by tsc
  */
-/**
+/** *
  * Current version of Angular Flex-Layout.
- */
-var /** @type {?} */ VERSION = new core.Version('6.0.0-beta.17');
+  @type {?} */
+var VERSION = new core.Version('7.0.0-beta.22');
 
 /**
  * @fileoverview added by tsickle
- * @suppress {checkTypes} checked by tsc
+ * @suppress {checkTypes,extraRequire,uselessCode} checked by tsc
  */
 /**
  * FlexLayoutModule -- the main import for all utilities in the Angular Layout library
@@ -55,27 +55,18 @@ var FlexLayoutModule = /** @class */ (function () {
      * @return {?}
      */
     function (configOptions, breakpoints) {
+        if (breakpoints === void 0) { breakpoints = []; }
         return {
             ngModule: FlexLayoutModule,
-            providers: Array.isArray(breakpoints) ?
-                configOptions.serverLoaded ?
-                    [
-                        { provide: core$1.LAYOUT_CONFIG, useValue: configOptions },
-                        { provide: core$1.BREAKPOINT, useValue: breakpoints, multi: true },
-                        { provide: core$1.SERVER_TOKEN, useValue: true },
-                    ] : [
+            providers: configOptions.serverLoaded ?
+                [
                     { provide: core$1.LAYOUT_CONFIG, useValue: configOptions },
                     { provide: core$1.BREAKPOINT, useValue: breakpoints, multi: true },
-                ]
-                :
-                    configOptions.serverLoaded ?
-                        [
-                            { provide: core$1.LAYOUT_CONFIG, useValue: configOptions },
-                            { provide: core$1.SERVER_TOKEN, useValue: true },
-                        ] :
-                        [
-                            { provide: core$1.LAYOUT_CONFIG, useValue: configOptions },
-                        ]
+                    { provide: core$1.SERVER_TOKEN, useValue: true },
+                ] : [
+                { provide: core$1.LAYOUT_CONFIG, useValue: configOptions },
+                { provide: core$1.BREAKPOINT, useValue: breakpoints, multi: true },
+            ]
         };
     };
     FlexLayoutModule.decorators = [
@@ -86,8 +77,8 @@ var FlexLayoutModule = /** @class */ (function () {
     ];
     /** @nocollapse */
     FlexLayoutModule.ctorParameters = function () { return [
-        { type: undefined, decorators: [{ type: core.Optional }, { type: core.Inject, args: [core$1.SERVER_TOKEN,] },] },
-        { type: Object, decorators: [{ type: core.Inject, args: [core.PLATFORM_ID,] },] },
+        { type: Boolean, decorators: [{ type: core.Optional }, { type: core.Inject, args: [core$1.SERVER_TOKEN,] }] },
+        { type: Object, decorators: [{ type: core.Inject, args: [core.PLATFORM_ID,] }] }
     ]; };
     return FlexLayoutModule;
 }());
@@ -98,15 +89,14 @@ exports.CLASS_NAME = core$1.CLASS_NAME;
 exports.CoreModule = core$1.CoreModule;
 exports.MediaChange = core$1.MediaChange;
 exports.StylesheetMap = core$1.StylesheetMap;
-exports.STYLESHEET_MAP_PROVIDER_FACTORY = core$1.STYLESHEET_MAP_PROVIDER_FACTORY;
-exports.STYLESHEET_MAP_PROVIDER = core$1.STYLESHEET_MAP_PROVIDER;
 exports.DEFAULT_CONFIG = core$1.DEFAULT_CONFIG;
 exports.LAYOUT_CONFIG = core$1.LAYOUT_CONFIG;
 exports.SERVER_TOKEN = core$1.SERVER_TOKEN;
 exports.BREAKPOINT = core$1.BREAKPOINT;
 exports.BaseDirective = core$1.BaseDirective;
 exports.BaseDirectiveAdapter = core$1.BaseDirectiveAdapter;
-exports.BaseFxDirective = core$1.BaseFxDirective;
+exports.BaseDirective2 = core$1.BaseDirective2;
+exports.prioritySort = core$1.prioritySort;
 exports.RESPONSIVE_ALIASES = core$1.RESPONSIVE_ALIASES;
 exports.DEFAULT_BREAKPOINTS = core$1.DEFAULT_BREAKPOINTS;
 exports.ScreenTypes = core$1.ScreenTypes;
@@ -120,43 +110,85 @@ exports.MockMatchMediaProvider = core$1.MockMatchMediaProvider;
 exports.ServerMediaQueryList = core$1.ServerMediaQueryList;
 exports.ServerMatchMedia = core$1.ServerMatchMedia;
 exports.MediaMonitor = core$1.MediaMonitor;
-exports.MEDIA_MONITOR_PROVIDER_FACTORY = core$1.MEDIA_MONITOR_PROVIDER_FACTORY;
-exports.MEDIA_MONITOR_PROVIDER = core$1.MEDIA_MONITOR_PROVIDER;
 exports.ObservableMedia = core$1.ObservableMedia;
 exports.MediaService = core$1.MediaService;
 exports.ObservableMediaProvider = core$1.ObservableMediaProvider;
-exports.OBSERVABLE_MEDIA_PROVIDER_FACTORY = core$1.OBSERVABLE_MEDIA_PROVIDER_FACTORY;
-exports.OBSERVABLE_MEDIA_PROVIDER = core$1.OBSERVABLE_MEDIA_PROVIDER;
+exports.MediaObserver = core$1.MediaObserver;
 exports.KeyOptions = core$1.KeyOptions;
 exports.ResponsiveActivation = core$1.ResponsiveActivation;
 exports.StyleUtils = core$1.StyleUtils;
+exports.StyleBuilder = core$1.StyleBuilder;
 exports.validateBasis = core$1.validateBasis;
+exports.MediaMarshaller = core$1.MediaMarshaller;
 exports.ExtendedModule = extended.ExtendedModule;
 exports.ClassDirective = extended.ClassDirective;
+exports.DefaultClassDirective = extended.DefaultClassDirective;
+exports.ImgSrcStyleBuilder = extended.ImgSrcStyleBuilder;
 exports.ImgSrcDirective = extended.ImgSrcDirective;
+exports.DefaultImgSrcDirective = extended.DefaultImgSrcDirective;
 exports.negativeOf = extended.negativeOf;
+exports.ShowHideStyleBuilder = extended.ShowHideStyleBuilder;
 exports.ShowHideDirective = extended.ShowHideDirective;
+exports.DefaultShowHideDirective = extended.DefaultShowHideDirective;
 exports.StyleDirective = extended.StyleDirective;
+exports.DefaultStyleDirective = extended.DefaultStyleDirective;
 exports.FlexModule = flex.FlexModule;
+exports.FlexStyleBuilder = flex.FlexStyleBuilder;
 exports.FlexDirective = flex.FlexDirective;
+exports.DefaultFlexDirective = flex.DefaultFlexDirective;
+exports.FlexAlignStyleBuilder = flex.FlexAlignStyleBuilder;
 exports.FlexAlignDirective = flex.FlexAlignDirective;
+exports.DefaultFlexAlignDirective = flex.DefaultFlexAlignDirective;
+exports.FlexFillStyleBuilder = flex.FlexFillStyleBuilder;
 exports.FlexFillDirective = flex.FlexFillDirective;
+exports.FlexOffsetStyleBuilder = flex.FlexOffsetStyleBuilder;
 exports.FlexOffsetDirective = flex.FlexOffsetDirective;
+exports.DefaultFlexOffsetDirective = flex.DefaultFlexOffsetDirective;
+exports.FlexOrderStyleBuilder = flex.FlexOrderStyleBuilder;
 exports.FlexOrderDirective = flex.FlexOrderDirective;
+exports.DefaultFlexOrderDirective = flex.DefaultFlexOrderDirective;
+exports.LayoutStyleBuilder = flex.LayoutStyleBuilder;
 exports.LayoutDirective = flex.LayoutDirective;
+exports.DefaultLayoutDirective = flex.DefaultLayoutDirective;
+exports.LayoutAlignStyleBuilder = flex.LayoutAlignStyleBuilder;
 exports.LayoutAlignDirective = flex.LayoutAlignDirective;
+exports.DefaultLayoutAlignDirective = flex.DefaultLayoutAlignDirective;
+exports.LayoutGapStyleBuilder = flex.LayoutGapStyleBuilder;
 exports.LayoutGapDirective = flex.LayoutGapDirective;
-exports.ɵb = grid.ɵb;
-exports.ɵc = grid.ɵc;
-exports.ɵd = grid.ɵd;
-exports.ɵe = grid.ɵe;
+exports.DefaultLayoutGapDirective = flex.DefaultLayoutGapDirective;
 exports.ɵf = grid.ɵf;
-exports.ɵg = grid.ɵg;
-exports.ɵh = grid.ɵh;
+exports.ɵe = grid.ɵe;
+exports.ɵd = grid.ɵd;
 exports.ɵi = grid.ɵi;
-exports.ɵa = grid.ɵa;
-exports.ɵj = grid.ɵj;
+exports.ɵh = grid.ɵh;
+exports.ɵg = grid.ɵg;
+exports.ɵl = grid.ɵl;
 exports.ɵk = grid.ɵk;
+exports.ɵj = grid.ɵj;
+exports.ɵo = grid.ɵo;
+exports.ɵn = grid.ɵn;
+exports.ɵm = grid.ɵm;
+exports.ɵr = grid.ɵr;
+exports.ɵq = grid.ɵq;
+exports.ɵp = grid.ɵp;
+exports.ɵu = grid.ɵu;
+exports.ɵt = grid.ɵt;
+exports.ɵs = grid.ɵs;
+exports.ɵx = grid.ɵx;
+exports.ɵw = grid.ɵw;
+exports.ɵv = grid.ɵv;
+exports.ɵba = grid.ɵba;
+exports.ɵz = grid.ɵz;
+exports.ɵy = grid.ɵy;
+exports.ɵc = grid.ɵc;
+exports.ɵb = grid.ɵb;
+exports.ɵa = grid.ɵa;
+exports.ɵbd = grid.ɵbd;
+exports.ɵbc = grid.ɵbc;
+exports.ɵbb = grid.ɵbb;
+exports.ɵbg = grid.ɵbg;
+exports.ɵbf = grid.ɵbf;
+exports.ɵbe = grid.ɵbe;
 exports.GridModule = grid.GridModule;
 exports.VERSION = VERSION;
 exports.FlexLayoutModule = FlexLayoutModule;

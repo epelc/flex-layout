@@ -1,14 +1,17 @@
-import { Observable, Subscribable, Subscription } from 'rxjs';
+import { Observable, PartialObserver, Subscribable, Subscription } from 'rxjs';
 import { BreakPointRegistry } from '../breakpoints/break-point-registry';
 import { MediaChange } from '../media-change';
 import { MatchMedia } from '../match-media/match-media';
 /**
  * Base class for MediaService and pseudo-token for
+ * @deprecated use MediaObserver instead
+ * @deletion-target v7.0.0-beta.21
  */
 export declare abstract class ObservableMedia implements Subscribable<MediaChange> {
     abstract isActive(query: string): boolean;
     abstract asObservable(): Observable<MediaChange>;
     abstract subscribe(next?: (value: MediaChange) => void, error?: (error: any) => void, complete?: () => void): Subscription;
+    abstract subscribe(observer?: PartialObserver<MediaChange>): Subscription;
 }
 /**
  * Class internalizes a MatchMedia service and exposes an Subscribable and Observable interface.
@@ -52,6 +55,8 @@ export declare abstract class ObservableMedia implements Subscribable<MediaChang
  *        ).subscribe(onChange);
  *    }
  *  }
+ *  @deprecated use MediaObserver instead
+ *  @deletion-target v7.0.0-beta.21
  */
 export declare class MediaService implements ObservableMedia {
     private breakpoints;
@@ -64,11 +69,11 @@ export declare class MediaService implements ObservableMedia {
     /**
      * Test if specified query/alias is active.
      */
-    isActive(alias: any): boolean;
+    isActive(alias: string): boolean;
     /**
      * Proxy to the Observable subscribe method
      */
-    subscribe(next?: (value: MediaChange) => void, error?: (error: any) => void, complete?: () => void): Subscription;
+    subscribe(observerOrNext?: PartialObserver<MediaChange> | ((value: MediaChange) => void), error?: (error: any) => void, complete?: () => void): Subscription;
     /**
      * Access to observable for use with operators like
      * .filter(), .map(), etc.
@@ -79,7 +84,7 @@ export declare class MediaService implements ObservableMedia {
      * This is needed so subscribers can be auto-notified of all standard, registered
      * mediaQuery activations
      */
-    private _registerBreakPoints();
+    private _registerBreakPoints;
     /**
      * Prepare internal observable
      *
@@ -87,21 +92,25 @@ export declare class MediaService implements ObservableMedia {
      *       contain important alias information; as such this info
      *       must be injected into the MediaChange
      */
-    private _buildObservable();
+    private _buildObservable;
     /**
      * Breakpoint locator by alias
      */
-    private _findByAlias(alias);
+    private _findByAlias;
     /**
      * Breakpoint locator by mediaQuery
      */
-    private _findByQuery(query);
+    private _findByQuery;
     /**
      * Find associated breakpoint (if any)
      */
-    private _toMediaQuery(query);
-    private observable$;
+    private _toMediaQuery;
+    private readonly observable$;
 }
+/**
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
+ */
 export declare const ObservableMediaProvider: {
     provide: typeof ObservableMedia;
     useClass: typeof MediaService;

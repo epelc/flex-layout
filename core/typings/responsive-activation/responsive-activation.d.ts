@@ -1,19 +1,18 @@
-/**
- * @license
- * Copyright Google LLC All Rights Reserved.
- *
- * Use of this source code is governed by an MIT-style license that can be
- * found in the LICENSE file at https://angular.io/license
- */
-import { Subscription } from 'rxjs';
 import { MediaChange, MediaQuerySubscriber } from '../media-change';
 import { BreakPoint } from '../breakpoints/break-point';
 import { MediaMonitor } from '../media-monitor/media-monitor';
-export declare type SubscriptionList = Subscription[];
+/**
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
+ */
 export interface BreakPointX extends BreakPoint {
     key: string;
     baseKey: string;
 }
+/**
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
+ */
 export declare class KeyOptions {
     baseKey: string;
     defaultValue: string | number | boolean;
@@ -35,14 +34,16 @@ export declare class KeyOptions {
  *   MediaQueryServices.
  *
  * NOTE: these interceptions enables the logic in the fx API directives to remain terse and clean.
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
  */
 export declare class ResponsiveActivation {
     private _options;
     private _mediaMonitor;
     private _onMediaChanges;
-    private _subscribers;
     private _activatedInputKey;
     private _registryMap;
+    private _subscribers;
     /**
      * Constructor
      */
@@ -54,12 +55,6 @@ export declare class ResponsiveActivation {
      * first matching media query.
      */
     readonly registryFromLargest: BreakPointX[];
-    /**
-     * Accessor to the DI'ed directive property
-     * Each directive instance has a reference to the MediaMonitor which is
-     * used HERE to subscribe to mediaQuery change notifications.
-     */
-    readonly mediaMonitor: MediaMonitor;
     /**
      * Determine which directive @Input() property is currently active (for the viewport size):
      * The key must be defined (in use) or fallback to the 'closest' overlapping property key
@@ -76,7 +71,7 @@ export declare class ResponsiveActivation {
     /**
      * Fast validator for presence of attribute on the host element
      */
-    hasKeyValue(key: any): boolean;
+    hasKeyValue(key: string): boolean;
     /**
      * Remove interceptors, restore original functions, and forward the onDestroy() call
      */
@@ -85,12 +80,12 @@ export declare class ResponsiveActivation {
      * For each *defined* API property, register a callback to `_onMonitorEvents( )`
      * Cache 1..n subscriptions for internal auto-unsubscribes when the the directive destructs
      */
-    private _configureChangeObservers();
+    private _configureChangeObservers;
     /**
      * Build mediaQuery key-hashmap; only for the directive properties that are actually defined/used
      * in the HTML markup
      */
-    private _buildRegistryMap();
+    private _buildRegistryMap;
     /**
      * Synchronizes change notifications with the current mq-activated @Input and calculates the
      * mq-activated input value or the default value
@@ -100,7 +95,7 @@ export declare class ResponsiveActivation {
      * Has the key been specified in the HTML markup and thus is intended
      * to participate in activation processes.
      */
-    private _keyInUse(key);
+    private _keyInUse;
     /**
      *  Map input key associated with mediaQuery activation to closest defined input key
      *  then return the values associated with the targeted input property
@@ -109,16 +104,16 @@ export declare class ResponsiveActivation {
      *     so make sure the deactivate is used ONLY when the keys match
      *     (since a different activate may be in use)
      */
-    private _calculateActivatedValue(current);
+    private _calculateActivatedValue;
     /**
      * For the specified input property key, validate it is defined (used in the markup)
      * If not see if a overlapping mediaQuery-related input key fallback has been defined
      *
      * NOTE: scans in the order defined by activeOverLaps (largest viewport ranges -> smallest ranges)
      */
-    private _validateInputKey(inputKey);
+    private _validateInputKey;
     /**
      * Get the value (if any) for the directive instances @Input property (aka key)
      */
-    private _lookupKeyValue(key);
+    private _lookupKeyValue;
 }

@@ -14,6 +14,8 @@ import { StyleUtils } from '../style-utils/style-utils';
 /**
  * Adapter to the BaseDirective abstract class so it can be used via composition.
  * @see BaseDirective
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
  */
 export declare class BaseDirectiveAdapter extends BaseDirective {
     protected _baseKey: string;
@@ -26,7 +28,9 @@ export declare class BaseDirectiveAdapter extends BaseDirective {
      */
     readonly activeKey: string;
     /** Hash map of all @Input keys/values defined/used */
-    readonly inputMap: {};
+    readonly inputMap: {
+        [key: string]: any;
+    };
     /**
      * @see BaseDirective._mqActivation
      */
@@ -34,7 +38,8 @@ export declare class BaseDirectiveAdapter extends BaseDirective {
     /**
      * BaseDirectiveAdapter constructor
      */
-    constructor(_baseKey: string, _mediaMonitor: MediaMonitor, _elementRef: ElementRef, _styler: StyleUtils);
+    constructor(_baseKey: string, // non-responsive @Input property name
+    _mediaMonitor: MediaMonitor, _elementRef: ElementRef, _styler: StyleUtils);
     /**
       * Does this directive have 1 or more responsive keys defined
       * Note: we exclude the 'baseKey' key (which is NOT considered responsive)
@@ -43,7 +48,7 @@ export declare class BaseDirectiveAdapter extends BaseDirective {
     /**
      * @see BaseDirective._queryInput
      */
-    queryInput(key: any): any;
+    queryInput(key: string | null): any;
     /**
      *  Save the property value.
      */

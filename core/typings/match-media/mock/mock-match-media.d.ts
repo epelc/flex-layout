@@ -22,30 +22,31 @@ export declare class MockMatchMedia extends MatchMedia {
      * activatedInput(s).
      */
     useOverlaps: boolean;
+    protected _registry: Map<string, MockMediaQueryList>;
     constructor(_zone: NgZone, _platformId: Object, _document: any, _breakpoints: BreakPointRegistry);
     /** Easy method to clear all listeners for all mediaQueries */
     clearAll(): void;
     /** Feature to support manual, simulated activation of a mediaQuery. */
     activate(mediaQuery: string, useOverlaps?: boolean): boolean;
     /** Converts an optional mediaQuery alias to a specific, valid mediaQuery */
-    _validateQuery(queryOrAlias: any): any;
+    _validateQuery(queryOrAlias: string): string;
     /**
      * Manually activate any overlapping mediaQueries to simulate
      * similar functionality in the window.matchMedia()
      */
-    private _activateWithOverlaps(mediaQuery, useOverlaps);
+    private _activateWithOverlaps;
     /**
      *
      */
-    private _activateByAlias(aliases);
+    private _activateByAlias;
     /**
      *
      */
-    private _activateByQuery(mediaQuery);
+    private _activateByQuery;
     /** Deactivate all current Mock MQLs */
-    private _deactivateAll();
+    private _deactivateAll;
     /** Insure the mediaQuery is registered with MatchMedia */
-    private _registerMediaQuery(mediaQuery);
+    private _registerMediaQuery;
     /**
      * Call window.matchMedia() to build a MediaQueryList; which
      * supports 0..n listeners for activation/deactivation
@@ -78,7 +79,11 @@ export declare class MockMediaQueryList implements MediaQueryList {
     /** Add a listener to our internal list to activate later */
     addListener(listener: MediaQueryListListener): void;
     /** Don't need to remove listeners in the testing environment */
-    removeListener(_: MediaQueryListListener): void;
+    removeListener(_: EventListenerOrEventListenerObject | null): void;
+    addEventListener<K extends keyof MediaQueryListEventMap>(_: K, __: (this: MediaQueryList, ev: MediaQueryListEventMap[K]) => any, ___?: boolean | AddEventListenerOptions): void;
+    removeEventListener<K extends keyof MediaQueryListEventMap>(_: K, __: (this: MediaQueryList, ev: MediaQueryListEventMap[K]) => any, ___?: boolean | EventListenerOptions): void;
+    dispatchEvent(_: Event): boolean;
+    onchange: MediaQueryListListener;
 }
 /**
  * Pre-configured provider for MockMatchMedia
@@ -87,3 +92,5 @@ export declare const MockMatchMediaProvider: {
     provide: typeof MatchMedia;
     useClass: typeof MockMatchMedia;
 };
+declare type MediaQueryListListener = ((this: MediaQueryList, ev: MediaQueryListEvent) => any) | null;
+export {};

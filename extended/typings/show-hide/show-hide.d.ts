@@ -5,69 +5,40 @@
  * Use of this source code is governed by an MIT-style license that can be
  * found in the LICENSE file at https://angular.io/license
  */
-import { ElementRef, OnInit, OnChanges, OnDestroy, SimpleChanges } from '@angular/core';
-import { BaseDirective, MediaMonitor, StyleUtils } from '@angular/flex-layout/core';
-import { Subscription } from 'rxjs';
-import { LayoutDirective } from '@angular/flex-layout/flex';
+import { ElementRef, OnChanges, SimpleChanges, AfterViewInit } from '@angular/core';
+import { BaseDirective2, LayoutConfigOptions, MediaMarshaller, StyleUtils, StyleBuilder } from '@angular/flex-layout/core';
 /**
  * For fxHide selectors, we invert the 'value'
  * and assign to the equivalent fxShow selector cache
  *  - When 'hide' === '' === true, do NOT show the element
  *  - When 'hide' === false or 0... we WILL show the element
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
  */
 export declare function negativeOf(hide: any): boolean;
-/**
- * 'show' Layout API directive
- *
- */
-export declare class ShowHideDirective extends BaseDirective implements OnInit, OnChanges, OnDestroy {
-    protected layout: LayoutDirective;
-    protected elRef: ElementRef;
-    protected styleUtils: StyleUtils;
+export interface ShowHideParent {
+    display: string;
+}
+export declare class ShowHideStyleBuilder extends StyleBuilder {
+    buildStyles(show: string, parent: ShowHideParent): {
+        'display': string;
+    };
+}
+export declare class ShowHideDirective extends BaseDirective2 implements AfterViewInit, OnChanges {
+    protected elementRef: ElementRef;
+    protected styleBuilder: ShowHideStyleBuilder;
+    protected styler: StyleUtils;
+    protected marshal: MediaMarshaller;
+    protected layoutConfig: LayoutConfigOptions;
     protected platformId: Object;
     protected serverModuleLoaded: boolean;
-    /**
-     * Subscription to the parent flex container's layout changes.
-     * Stored so we can unsubscribe when this directive is destroyed.
-     */
-    protected _layoutWatcher: Subscription;
+    protected DIRECTIVE_KEY: string;
     /** Original dom Elements CSS display style */
-    protected _display: string;
-    show: any;
-    showXs: any;
-    showSm: any;
-    showMd: any;
-    showLg: any;
-    showXl: any;
-    showLtSm: any;
-    showLtMd: any;
-    showLtLg: any;
-    showLtXl: any;
-    showGtXs: any;
-    showGtSm: any;
-    showGtMd: any;
-    showGtLg: any;
-    hide: any;
-    hideXs: any;
-    hideSm: any;
-    hideMd: any;
-    hideLg: any;
-    hideXl: any;
-    hideLtSm: any;
-    hideLtMd: any;
-    hideLtLg: any;
-    hideLtXl: any;
-    hideGtXs: any;
-    hideGtSm: any;
-    hideGtMd: any;
-    hideGtLg: any;
-    constructor(monitor: MediaMonitor, layout: LayoutDirective, elRef: ElementRef, styleUtils: StyleUtils, platformId: Object, serverModuleLoaded: boolean);
-    /**
-     * Override accessor to the current HTMLElement's `display` style
-     * Note: Show/Hide will not change the display to 'flex' but will set it to 'block'
-     * unless it was already explicitly specified inline or in a CSS stylesheet.
-     */
-    protected _getDisplayStyle(): string;
+    protected display: string;
+    protected hasLayout: boolean;
+    protected hasFlexChild: boolean;
+    constructor(elementRef: ElementRef, styleBuilder: ShowHideStyleBuilder, styler: StyleUtils, marshal: MediaMarshaller, layoutConfig: LayoutConfigOptions, platformId: Object, serverModuleLoaded: boolean);
+    ngAfterViewInit(): void;
     /**
      * On changes to any @Input properties...
      * Default to use the non-responsive Input value ('fxShow')
@@ -75,17 +46,17 @@ export declare class ShowHideDirective extends BaseDirective implements OnInit, 
      */
     ngOnChanges(changes: SimpleChanges): void;
     /**
-     * After the initial onChanges, build an mqActivation object that bridges
-     * mql change events to onMediaQueryChange handlers
+     * Override accessor to the current HTMLElement's `display` style
+     * Note: Show/Hide will not change the display to 'flex' but will set it to 'block'
+     * unless it was already explicitly specified inline or in a CSS stylesheet.
      */
-    ngOnInit(): void;
-    ngOnDestroy(): void;
+    protected getDisplayStyle(): string;
     /** Validate the visibility value and then update the host's inline display style */
-    protected _updateWithValue(value?: string | number | boolean): void;
-    /** Build the CSS that should be assigned to the element instance */
-    protected _buildCSS(show: any): {
-        'display': string;
-    };
-    /**  Validate the to be not FALSY */
-    _validateTruthy(show: any): boolean;
+    protected updateWithValue(value?: boolean | string): void;
+}
+/**
+ * 'show' Layout API directive
+ */
+export declare class DefaultShowHideDirective extends ShowHideDirective {
+    protected inputs: string[];
 }

@@ -10,25 +10,30 @@ import { StyleDefinition, StyleUtils } from '../style-utils/style-utils';
 import { ResponsiveActivation } from '../responsive-activation/responsive-activation';
 import { MediaMonitor } from '../media-monitor/media-monitor';
 import { MediaQuerySubscriber } from '../media-change';
-/** Abstract base class for the Layout API styling directives. */
+import { StyleBuilder } from '../style-builder/style-builder';
+/**
+ * Abstract base class for the Layout API styling directives.
+ * @deprecated
+ * @deletion-target v7.0.0-beta.21
+ */
 export declare abstract class BaseDirective implements OnDestroy, OnChanges {
     protected _mediaMonitor: MediaMonitor;
     protected _elementRef: ElementRef;
     protected _styler: StyleUtils;
-    readonly hasMediaQueryListener: boolean;
+    protected _styleBuilder?: StyleBuilder | undefined;
     /**
      * Imperatively determine the current activated [input] value;
      * if called before ngOnInit() this will return `undefined`
      */
     /**
-     * Change the currently activated input value and force-update
-     * the injected CSS (by-passing change detection).
-     *
-     * NOTE: Only the currently activated input value will be modified;
-     *       other input values will NOT be affected.
-     */
+    * Change the currently activated input value and force-update
+    * the injected CSS (by-passing change detection).
+    *
+    * NOTE: Only the currently activated input value will be modified;
+    *       other input values will NOT be affected.
+    */
     activatedValue: string | number;
-    protected constructor(_mediaMonitor: MediaMonitor, _elementRef: ElementRef, _styler: StyleUtils);
+    protected constructor(_mediaMonitor: MediaMonitor, _elementRef: ElementRef, _styler: StyleUtils, _styleBuilder?: StyleBuilder | undefined);
     /**
      * Does this directive have 1 or more responsive keys defined
      * Note: we exclude the 'baseKey' key (which is NOT considered responsive)
@@ -44,8 +49,10 @@ export declare abstract class BaseDirective implements OnDestroy, OnChanges {
     /** Access to host element's parent DOM node */
     protected readonly parentElement: any;
     protected readonly nativeElement: HTMLElement;
+    /** Add styles to the element using predefined style builder */
+    protected addStyles(input: string, parent?: Object): void;
     /** Access the current value (if any) of the @Input property */
-    protected _queryInput(key: any): any;
+    protected _queryInput(key: string): any;
     /**
      * Was the directive's default selector used ?
      * If not, use the fallback value!
@@ -82,14 +89,14 @@ export declare abstract class BaseDirective implements OnDestroy, OnChanges {
      */
     protected _listenForMediaQueryChanges(key: string, defaultValue: any, onMediaQueryChange: MediaQuerySubscriber): ResponsiveActivation;
     /** Special accessor to query for all child 'element' nodes regardless of type, class, etc */
-    protected readonly childrenNodes: any[];
-    /** Fast validator for presence of attribute on the host element */
-    protected hasKeyValue(key: any): boolean;
+    protected readonly childrenNodes: HTMLElement[];
     protected readonly hasInitialized: boolean;
     /** MediaQuery Activation Tracker */
-    protected _mqActivation: ResponsiveActivation;
+    protected _mqActivation?: ResponsiveActivation;
     /** Dictionary of input keys with associated values */
-    protected _inputMap: {};
+    protected _inputMap: {
+        [key: string]: any;
+    };
     /**
      * Has the `ngOnInit()` method fired
      *
@@ -97,4 +104,6 @@ export declare abstract class BaseDirective implements OnDestroy, OnChanges {
      * getComputedStyle() during ngOnInit().
      */
     protected _hasInitialized: boolean;
+    /** Cache map for style computation */
+    protected _styleCache: Map<string, StyleDefinition>;
 }
