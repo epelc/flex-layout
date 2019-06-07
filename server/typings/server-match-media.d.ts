@@ -1,6 +1,5 @@
 import { NgZone } from '@angular/core';
-import { BreakPoint } from '../breakpoints/break-point';
-import { MatchMedia } from './match-media';
+import { BreakPoint, ɵMatchMedia as MatchMedia } from '@angular/flex-layout/core';
 /**
  * Special server-only class to simulate a MediaQueryList and
  * - supports manual activation to simulate mediaQuery matching
@@ -25,7 +24,7 @@ export declare class ServerMediaQueryList implements MediaQueryList {
     /** Add a listener to our internal list to activate later */
     addListener(listener: MediaQueryListListener): void;
     /** Don't need to remove listeners in the server environment */
-    removeListener(_: EventListenerOrEventListenerObject | null): void;
+    removeListener(_: MediaQueryListListener | null): void;
     addEventListener<K extends keyof MediaQueryListEventMap>(_: K, __: (this: MediaQueryList, ev: MediaQueryListEventMap[K]) => any, ___?: boolean | AddEventListenerOptions): void;
     removeEventListener<K extends keyof MediaQueryListEventMap>(_: K, __: (this: MediaQueryList, ev: MediaQueryListEventMap[K]) => any, ___?: boolean | EventListenerOptions): void;
     dispatchEvent(_: Event): boolean;
@@ -41,7 +40,6 @@ export declare class ServerMatchMedia extends MatchMedia {
     protected _zone: NgZone;
     protected _platformId: Object;
     protected _document: any;
-    protected _registry: Map<string, ServerMediaQueryList>;
     constructor(_zone: NgZone, _platformId: Object, _document: any);
     /** Activate the specified breakpoint if we're on the server, no-op otherwise */
     activateBreakpoint(bp: BreakPoint): void;
@@ -51,7 +49,7 @@ export declare class ServerMatchMedia extends MatchMedia {
      * Call window.matchMedia() to build a MediaQueryList; which
      * supports 0..n listeners for activation/deactivation
      */
-    protected _buildMQL(query: string): ServerMediaQueryList;
+    protected buildMQL(query: string): ServerMediaQueryList;
 }
 declare type MediaQueryListListener = ((this: MediaQueryList, ev: MediaQueryListEvent) => any) | null;
 export {};
