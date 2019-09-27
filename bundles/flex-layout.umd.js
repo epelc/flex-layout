@@ -4439,6 +4439,9 @@ var ImgSrcDirective = /** @class */ (function (_super) {
             this.nativeElement.setAttribute('src', url);
         }
     };
+    ImgSrcDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'img-src-directive' },] },
+    ];
     /** @nocollapse */
     ImgSrcDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -4564,6 +4567,9 @@ var ClassDirective = /** @class */ (function (_super) {
     function () {
         this.ngClassInstance.ngDoCheck();
     };
+    ClassDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'class-directive' },] },
+    ];
     /** @nocollapse */
     ClassDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -4831,6 +4837,9 @@ var ShowHideDirective = /** @class */ (function (_super) {
         }
         this.marshal.triggerUpdate((/** @type {?} */ (this.parentElement)), 'layout-gap');
     };
+    ShowHideDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'show-hide-directive' },] },
+    ];
     /** @nocollapse */
     ShowHideDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -5140,6 +5149,9 @@ var StyleDirective = /** @class */ (function (_super) {
     function () {
         this.ngStyleInstance.ngDoCheck();
     };
+    StyleDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'style-directive' },] },
+    ];
     /** @nocollapse */
     StyleDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -5222,7 +5234,11 @@ var ALL_DIRECTIVES = [
     DefaultShowHideDirective,
     DefaultClassDirective,
     DefaultStyleDirective,
-    DefaultImgSrcDirective
+    DefaultImgSrcDirective,
+    ClassDirective,
+    ImgSrcDirective,
+    ShowHideDirective,
+    StyleDirective,
 ];
 /**
  * *****************************************************************
@@ -5404,6 +5420,9 @@ var LayoutDirective = /** @class */ (function (_super) {
         _this.init();
         return _this;
     }
+    LayoutDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'layout-directive' },] },
+    ];
     /** @nocollapse */
     LayoutDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -5785,6 +5804,9 @@ var LayoutGapDirective = /** @class */ (function (_super) {
             }
         }));
     };
+    LayoutGapDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'layout-gap-directive' },] },
+    ];
     /** @nocollapse */
     LayoutGapDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -6264,10 +6286,13 @@ var FlexDirective = /** @class */ (function (_super) {
         var activatedValue = this.activatedValue;
         if (activatedValue !== undefined) {
             /** @type {?} */
-            var parts = validateBasis(activatedValue, this.flexGrow, this.flexShrink);
+            var parts = validateBasis(activatedValue + '', this.flexGrow, this.flexShrink);
             this.marshal.updateElement(this.nativeElement, this.DIRECTIVE_KEY, parts.join(' '));
         }
     };
+    FlexDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'flex-directive' },] },
+    ];
     /** @nocollapse */
     FlexDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -6356,6 +6381,9 @@ var FlexOrderDirective = /** @class */ (function (_super) {
         _this.init();
         return _this;
     }
+    FlexOrderDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'flex-order-directive' },] },
+    ];
     /** @nocollapse */
     FlexOrderDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -6508,6 +6536,9 @@ var FlexOffsetDirective = /** @class */ (function (_super) {
         }
         this.addStyles(value + '', { layout: layout, isRtl: isRtl });
     };
+    FlexOffsetDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'flex-offset-directive' },] },
+    ];
     /** @nocollapse */
     FlexOffsetDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -6607,6 +6638,9 @@ var FlexAlignDirective = /** @class */ (function (_super) {
         _this.init();
         return _this;
     }
+    FlexAlignDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'flex-align-directive' },] },
+    ];
     /** @nocollapse */
     FlexAlignDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -6913,6 +6947,9 @@ var LayoutAlignDirective = /** @class */ (function (_super) {
         }
         this.triggerUpdate();
     };
+    LayoutAlignDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'layout-align-directive' },] },
+    ];
     /** @nocollapse */
     LayoutAlignDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -6965,6 +7002,13 @@ var ALL_DIRECTIVES$1 = [
     FlexFillDirective,
     DefaultFlexAlignDirective,
     DefaultFlexDirective,
+    FlexDirective,
+    FlexAlignDirective,
+    FlexOffsetDirective,
+    FlexOrderDirective,
+    LayoutDirective,
+    LayoutAlignDirective,
+    LayoutGapDirective,
 ];
 /**
  * *****************************************************************
@@ -7027,6 +7071,9 @@ var GridAlignDirective = /** @class */ (function (_super) {
         _this.init();
         return _this;
     }
+    GridAlignDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-align-directive' },] },
+    ];
     /** @nocollapse */
     GridAlignDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -7197,6 +7244,9 @@ var GridAlignColumnsDirective = /** @class */ (function (_super) {
         this.styleCache = this.inline ? alignColumnsInlineCache : alignColumnsCache;
         this.addStyles(value, { inline: this.inline });
     };
+    GridAlignColumnsDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-align-columns-directive' },] },
+    ];
     /** @nocollapse */
     GridAlignColumnsDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -7382,6 +7432,9 @@ var GridAlignRowsDirective = /** @class */ (function (_super) {
         this.styleCache = this.inline ? alignRowsInlineCache : alignRowsCache;
         this.addStyles(value, { inline: this.inline });
     };
+    GridAlignRowsDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-align-rows-directive' },] },
+    ];
     /** @nocollapse */
     GridAlignRowsDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -7508,6 +7561,9 @@ var GridAreaDirective = /** @class */ (function (_super) {
         _this.init();
         return _this;
     }
+    GridAreaDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-area-directive' },] },
+    ];
     /** @nocollapse */
     GridAreaDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -7637,6 +7693,9 @@ var GridAreasDirective = /** @class */ (function (_super) {
         this.styleCache = this.inline ? areasInlineCache : areasCache;
         this.addStyles(value, { inline: this.inline });
     };
+    GridAreasDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-areas-directive' },] },
+    ];
     /** @nocollapse */
     GridAreasDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -7768,6 +7827,9 @@ var GridAutoDirective = /** @class */ (function (_super) {
         this.styleCache = this.inline ? autoInlineCache : autoCache;
         this.addStyles(value, { inline: this.inline });
     };
+    GridAutoDirective.decorators = [
+        { type: core.Directive, args: [{ selector: "grid-auto-directive" },] },
+    ];
     /** @nocollapse */
     GridAutoDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -7852,6 +7914,9 @@ var GridColumnDirective = /** @class */ (function (_super) {
         _this.init();
         return _this;
     }
+    GridColumnDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-column-directive' },] },
+    ];
     /** @nocollapse */
     GridColumnDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -7988,6 +8053,9 @@ var GridColumnsDirective = /** @class */ (function (_super) {
         this.styleCache = this.inline ? columnsInlineCache : columnsCache;
         this.addStyles(value, { inline: this.inline });
     };
+    GridColumnsDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-columns-directive' },] },
+    ];
     /** @nocollapse */
     GridColumnsDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -8115,6 +8183,9 @@ var GridGapDirective = /** @class */ (function (_super) {
         this.styleCache = this.inline ? gapInlineCache : gapCache;
         this.addStyles(value, { inline: this.inline });
     };
+    GridGapDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-gap-directive' },] },
+    ];
     /** @nocollapse */
     GridGapDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -8200,6 +8271,9 @@ var GridRowDirective = /** @class */ (function (_super) {
         _this.init();
         return _this;
     }
+    GridRowDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-row-directive' },] },
+    ];
     /** @nocollapse */
     GridRowDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -8336,6 +8410,9 @@ var GridRowsDirective = /** @class */ (function (_super) {
         this.styleCache = this.inline ? rowsInlineCache : rowsCache;
         this.addStyles(value, { inline: this.inline });
     };
+    GridRowsDirective.decorators = [
+        { type: core.Directive, args: [{ selector: 'grid-rows-directive' },] },
+    ];
     /** @nocollapse */
     GridRowsDirective.ctorParameters = function () { return [
         { type: core.ElementRef },
@@ -8397,6 +8474,17 @@ var ALL_DIRECTIVES$2 = [
     DefaultGridGapDirective,
     DefaultGridRowDirective,
     DefaultGridRowsDirective,
+    GridAlignColumnsDirective,
+    GridAlignRowsDirective,
+    GridAreaDirective,
+    GridAreasDirective,
+    GridAutoDirective,
+    GridColumnDirective,
+    GridColumnsDirective,
+    GridGapDirective,
+    GridAlignDirective,
+    GridRowDirective,
+    GridRowsDirective,
 ];
 /**
  * *****************************************************************
@@ -8424,7 +8512,7 @@ var GridModule = /** @class */ (function () {
  * Current version of Angular Flex-Layout.
  * @type {?}
  */
-var VERSION = new core.Version('8.0.0-beta.26');
+var VERSION = new core.Version('8.0.0-beta.27');
 
 /**
  * @fileoverview added by tsickle
